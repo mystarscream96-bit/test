@@ -357,7 +357,7 @@ async function puanGonder() {
     if (!hedef) return alert("Oyuncu seç!");
     if (!val || val < 1 || val > 10) return alert("1-10 arası puan!");
     if (hedef === currentUser) return alert("Kendine puan veremezsin!");
-
+    if (!Number.isInteger(val)) return alert("Puan tam sayı olmalı!");
     let kontrol = CACHE.ratings.filter(
         r => r.from === currentUser && r.to === hedef
     )[0];

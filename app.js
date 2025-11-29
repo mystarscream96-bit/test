@@ -10,6 +10,9 @@ const DEFAULT_PHOTO = "https://i.hizliresim.com/hw8yfje.png";
 let currentUser = null;
 const db = firebase.firestore();
 
+let selects = {};
+let multiSelects = {};
+
 // ==========================================================
 // GLOBAL CACHE — TÜM VERİLERİ 1 KERE ÇEKER
 // ==========================================================

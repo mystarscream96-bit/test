@@ -548,20 +548,20 @@ async function loadEnIyi() {
         let userRatings = CACHE.ratings.filter(r => r.to === name);
         let totalPoints = userRatings.reduce((t, r) => t + Number(r.score), 0);
 
-        // GOL + ASİST
+        // GOL + ASİST TOPLAMI
         let userGA = CACHE.ga.filter(g => g.name === name);
         let totalGol = userGA.reduce((t, g) => t + Number(g.gol), 0);
         let totalAsist = userGA.reduce((t, g) => t + Number(g.asist), 0);
 
-        // KAZANANLAR
+        // KAZANAN SAYISI
         let winCount = CACHE.winners.filter(w => w.players.includes(name)).length;
 
-        // TOPLAM PUAN FORMÜLÜ
+        // FİNAL PUAN
         let finalScore =
-            totalPoints +        // verilen puan toplamı
-            totalGol * 2 +       // gol
-            totalAsist * 1 +     // asist
-            winCount * 5;        // kazanan bonus
+            totalPoints +
+            (totalGol * 2) +
+            (totalAsist * 1) +
+            (winCount * 5);
 
         arr.push({
             name,
@@ -570,10 +570,13 @@ async function loadEnIyi() {
         });
     });
 
-    arr.sort((a, b) => b.total - a.total);
+    // 🔥 0 PUANLI OYUNCULARI ÇIKAR + SIRALA
+    arr = arr
+        .filter(p => p.total > 0)      // Sıfır olanlar tamamen gizlenir
+        .sort((a, b) => b.total - a.total);  // Büyükten küçüğe sırala
 
+    // 🔥 EKRANA BAS
     arr.forEach(p => {
-       if (d.asist <= 0) return;
         box.innerHTML += `
             <div class="kr-item">
                 <div class="kr-left">
@@ -585,6 +588,7 @@ async function loadEnIyi() {
         `;
     });
 }
+
 
 
 // ==========================================================

@@ -6,7 +6,7 @@ const upload = Upload({
     apiKey: "public_G22nj4G4oJqYwoLB52gv3yHBP462"
 });
 
-const DEFAULT_PHOTO = "https://i.hizliresim.com/g6vtu41.png";
+const DEFAULT_PHOTO = "https://i.hizliresim.com/hw8yfje.png";
 let currentUser = null;
 const db = firebase.firestore();
 

@@ -573,6 +573,7 @@ async function loadEnIyi() {
     arr.sort((a, b) => b.total - a.total);
 
     arr.forEach(p => {
+       if (d.asist <= 0) return;
         box.innerHTML += `
             <div class="kr-item">
                 <div class="kr-left">

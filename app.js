@@ -1,5 +1,5 @@
 /* ==========================================================
-   V15 FINAL — GLOBAL
+   V17 PRO — GLOBAL OPTIMIZED (TEK DOSYA)
 ========================================================== */
 
 const upload = Upload({
@@ -10,44 +10,56 @@ const DEFAULT_PHOTO = "https://i.hizliresim.com/hw8yfje.png";
 let currentUser = null;
 const db = firebase.firestore();
 
-let selects = {};       // single selects
-let multiSelects = {};  // multi selects
+// ==========================================================
+// GLOBAL CACHE — TÜM VERİLERİ 1 KERE ÇEKER
+// ==========================================================
 
+let CACHE = {
+    players: [],
+    ratings: [],
+    ga: [],
+    winners: []
+};
 
-/* ==========================================================
-   GLOBAL NOTIFICATION
-========================================================== */
+// Tek seferde tüm verileri yükler
+async function refreshCache() {
+    const [p, r, g, w] = await Promise.all([
+        db.collection("players").get(),
+        db.collection("ratings").get(),
+        db.collection("ga").get(),
+        db.collection("winners").get()
+    ]);
+
+    CACHE.players = p.docs.map(d => ({ id: d.id, ...d.data() }));
+    CACHE.ratings = r.docs.map(d => ({ id: d.id, ...d.data() }));
+    CACHE.ga = g.docs.map(d => ({ id: d.id, ...d.data() }));
+    CACHE.winners = w.docs.map(d => ({ id: d.id, ...d.data() }));
+}
+
+// ==========================================================
+// NOTIFICATION
+// ==========================================================
 function notify(msg = "Kaydedildi") {
     const n = document.getElementById("notify");
     n.innerText = msg;
     n.style.display = "block";
-
-    setTimeout(() => {
-        n.style.display = "none";
-    }, 2000);
+    setTimeout(() => (n.style.display = "none"), 2000);
 }
 
-
-
-/* ==========================================================
-   CUSTOM SELECT ENGINE (V15 — SIFIR ÇAKIŞMA)
-========================================================== */
-
+// ==========================================================
+// CUSTOM SELECT ENGINE
+// ==========================================================
 document.addEventListener("click", e => {
     document.querySelectorAll(".custom-options").forEach(opt => {
-        if (!opt.parentElement.contains(e.target)) {
-            opt.style.display = "none";
-        }
+        if (!opt.parentElement.contains(e.target)) opt.style.display = "none";
     });
 });
 
-/* ========== SINGLE SELECT ========== */
 function buildSingleSelect(wrapper, items) {
     const display = wrapper.querySelector(".custom-display");
     const options = wrapper.querySelector(".custom-options");
 
     options.innerHTML = "";
-
     let selected = null;
 
     items.forEach(name => {
@@ -79,7 +91,6 @@ function buildSingleSelect(wrapper, items) {
     };
 }
 
-/* ========== MULTI SELECT (CHIP STYLE) ========== */
 function buildMultiSelect(wrapper, items) {
     const chipArea = wrapper.querySelector(".multi-selected");
     const options = wrapper.querySelector(".custom-options");
@@ -98,12 +109,11 @@ function buildMultiSelect(wrapper, items) {
             if (selected.includes(name)) {
                 selected = selected.filter(x => x !== name);
                 div.classList.remove("selected");
-                refreshChips();
             } else {
                 selected.push(name);
                 div.classList.add("selected");
-                refreshChips();
             }
+            refreshChips();
         };
 
         options.appendChild(div);
@@ -119,16 +129,13 @@ function buildMultiSelect(wrapper, items) {
             let chip = document.createElement("div");
             chip.className = "chip";
             chip.innerHTML = `${name} <span class="chip-remove">×</span>`;
-
             chip.querySelector(".chip-remove").onclick = () => {
                 selected = selected.filter(x => x !== name);
                 refreshChips();
-
                 [...options.children].forEach(o => {
                     if (o.innerText === name) o.classList.remove("selected");
                 });
             };
-
             chipArea.appendChild(chip);
         });
     }
@@ -140,165 +147,114 @@ function buildMultiSelect(wrapper, items) {
     };
 }
 
-
-
-/* ==========================================================
-   SAYFA GEÇİŞİ + NAVBAR AKTİF BUTON
-========================================================== */
-/* ==========================================================
-   SAYFA GEÇİŞİ
-========================================================== */
+// ==========================================================
+// PAGE SYSTEM
+// ==========================================================
 function showPage(id) {
-
-    // Tüm sayfaları kapat
     document.querySelectorAll(".page").forEach(p => {
         p.classList.remove("active");
         p.style.display = "none";
     });
 
-    // Açılacak sayfa
     const page = document.getElementById(id);
     page.style.display = "block";
     page.classList.add("active");
 
-    // PROFİL SAYFASI AÇILIYORSA → FOTOĞRAFI GETİR
     if (currentUser === "ADMIN" && id === "profilim") {
-    alert("Admin için profil bölümü kapalı.");
-    return;
-}
+        alert("Admin için profil bölümü kapalı.");
+        return;
+    }
 
-    // Login dışında sayfayı kaydet
     if (id !== "login") {
         localStorage.setItem("hsPage", id);
     }
 }
 
-
-/* ==========================================================
-   PROFİL YÜKLEME
-========================================================== */
+// ==========================================================
+// PROFIL
+// ==========================================================
 async function loadProfil() {
-    console.log("Profil yükleniyor... Kullanıcı =", currentUser);
-
     if (!currentUser || currentUser === "ADMIN") {
         document.getElementById("profilPhoto").src = DEFAULT_PHOTO;
         document.getElementById("profilName").innerText = "Admin";
         return;
     }
 
-    const snap = await db.collection("players")
-        .where("name", "==", currentUser)
-        .get();
+    let p = CACHE.players.find(x => x.name === currentUser);
+    if (!p) return;
 
-    if (snap.empty) {
-        console.warn("Profil bulunamadı:", currentUser);
-        return;
-    }
-
-    const data = snap.docs[0].data();
-
-    document.getElementById("profilPhoto").src = data.photo || DEFAULT_PHOTO;
-    document.getElementById("profilName").innerText = data.name;
+    document.getElementById("profilPhoto").src = p.photo || DEFAULT_PHOTO;
+    document.getElementById("profilName").innerText = p.name;
 }
 
-
-
-
-
-
-/* ==========================================================
-   LOGIN
-========================================================== */
+// ==========================================================
+// LOGIN
+// ==========================================================
 async function login() {
     let name = selects["loginUser"]?.value;
-
     if (!name) return alert("Kullanıcı seç!");
 
-    // ❌ ADMIN seçildi ama adminLogin fonksiyonu kullanılmadı
     if (name === "ADMIN") {
-        return alert("ADMIN girişi için şifreli giriş yapmalısın!");
+        return alert("ADMIN girişi için şifreli giriş yap!");
     }
 
     currentUser = name;
-    localStorage.setItem("hsUser", currentUser);
+    localStorage.setItem("hsUser", name);
 
-    hideAdminButtons(); // Normal kullanıcı → admin butonları kapat
-
+    hideAdminButtons();
     openApp();
     notify("Giriş Yapıldı");
 }
 
-
-/* ==========================================================
-   ADMIN LOGIN
-========================================================== */
 async function adminLogin() {
     let pass = document.getElementById("adminPass").value;
-
     if (pass !== "2611") return alert("Hatalı şifre!");
 
     currentUser = "ADMIN";
-    localStorage.setItem("hsUser", currentUser);
+    localStorage.setItem("hsUser", "ADMIN");
 
-    hideAdminButtons();   // Her ihtimale karşı önce kapat
-    showAdminButtons();   // Sonra aç
+    hideAdminButtons();
+    showAdminButtons();
 
     openApp();
     notify("Admin Girişi");
 }
-
 
 function showAdminButtons() {
     document.getElementById("adminBtn").style.display = "inline-block";
     document.getElementById("gaBtn").style.display = "inline-block";
     document.getElementById("winBtn").style.display = "inline-block";
 }
-
 function hideAdminButtons() {
     document.getElementById("adminBtn").style.display = "none";
     document.getElementById("gaBtn").style.display = "none";
     document.getElementById("winBtn").style.display = "none";
 }
 
-
-/* ==========================================================
-   UYGULAMAYI AÇ (YENİLEME + LOGIN ORTAK FONKSİYON)
-========================================================== */
+// ==========================================================
+// APP OPEN
+// ==========================================================
 async function openApp() {
     document.getElementById("login").style.display = "none";
     document.getElementById("navbar").style.display = "flex";
 
     hideAdminButtons();
+    if (currentUser === "ADMIN") showAdminButtons();
 
-    if (currentUser === "ADMIN") {
-        showAdminButtons();
-    }
-	if (currentUser === "ADMIN") {
-    document.getElementById("profilBtn").style.display = "none";
-} else {
-    document.getElementById("profilBtn").style.display = "inline-block";
-}
+    document.getElementById("profilBtn").style.display =
+        currentUser === "ADMIN" ? "none" : "inline-block";
 
     await loadAll();
 
-    let savedPage = currentUser ? localStorage.getItem("hsPage") : null;
-
-    if (!savedPage) savedPage = "oyuncular";
-
-    setTimeout(() => {
-        if (currentUser) showPage(savedPage);
-    }, 150);
+    let savedPage = localStorage.getItem("hsPage") || "oyuncular";
+    setTimeout(() => showPage(savedPage), 150);
 }
 
-
-
-
-/* ==========================================================
-   SELECTLERİ OLUŞTUR
-========================================================== */
+// ==========================================================
+// SELECT SETUP
+// ==========================================================
 async function setupSelects() {
-    const snap = await db.collection("players").get();
-    const list = snap.docs.map(d => d.data().name);
+    const list = CACHE.players.map(d => d.name);
 
     selects["loginUser"] = buildSingleSelect(
         document.querySelector('[data-id="loginUser"]'),
@@ -326,53 +282,41 @@ async function setupSelects() {
     );
 }
 
-
-
-/* ==========================================================
-   YÜKLEME SIRASI
-========================================================== */
-
+// ==========================================================
+// DOM LOADED
+// ==========================================================
 window.addEventListener("DOMContentLoaded", async () => {
     let savedUser = localStorage.getItem("hsUser");
 
-    if (
-    !savedUser ||
-    savedUser === "null" ||
-    savedUser === "undefined" ||
-    savedUser.trim() === ""
-) {
-    currentUser = null;
+    if (!savedUser || savedUser === "null" || savedUser.trim() === "") {
+        currentUser = null;
 
-    // Navbar kapalı
-    document.getElementById("navbar").style.display = "none";
+        document.getElementById("navbar").style.display = "none";
 
-    // Tüm sayfaları kapat
-    document.querySelectorAll(".page").forEach(p => {
-        p.classList.remove("active");
-        p.style.display = "none";
-    });
+        document.querySelectorAll(".page").forEach(p => {
+            p.classList.remove("active");
+            p.style.display = "none";
+        });
 
-    // Login ekranını aç
-    const loginPage = document.getElementById("login");
-    loginPage.style.display = "block";
-    loginPage.classList.add("active");
+        const loginPage = document.getElementById("login");
+        loginPage.style.display = "block";
+        loginPage.classList.add("active");
 
-    // ❗ LOGIN EKRANI İÇİN SELECTLERİ YÜKLE
-    await setupSelects();
+        await refreshCache();
+        await setupSelects();
 
-    return;
-}
+        return;
+    }
 
     currentUser = savedUser.trim();
-    openApp();
+    await openApp();
 });
 
-
-
-/* ==========================================================
-   TÜM VERİLERİ YÜKLE
-========================================================== */
+// ==========================================================
+// LOAD ALL DATA
+// ==========================================================
 async function loadAll() {
+    await refreshCache();
     await loadPlayers();
     await loadGecmis();
     await loadGolKr();
@@ -382,21 +326,15 @@ async function loadAll() {
     await setupSelects();
 }
 
-
-
-/* ==========================================================
-   OYUNCULAR
-========================================================== */
+// ==========================================================
+// OYUNCULAR
+// ==========================================================
 async function loadPlayers() {
     const box = document.getElementById("oyuncuListe");
     box.innerHTML = "";
 
-    const snap = await db.collection("players").get();
-
-    snap.forEach(doc => {
-        const p = doc.data();
+    CACHE.players.forEach(p => {
         const photo = p.photo || DEFAULT_PHOTO;
-
         box.innerHTML += `
             <div class="card">
                 <img src="${photo}">
@@ -406,38 +344,30 @@ async function loadPlayers() {
     });
 }
 
-
-
-/* ==========================================================
-   PUAN GÖNDER
-========================================================== */
+// ==========================================================
+// PUAN GÖNDER
+// ==========================================================
 async function puanGonder() {
     let hedef = selects["puanTarget"].value;
     let val = Number(document.getElementById("puanValue").value);
 
     if (!hedef) return alert("Oyuncu seç!");
-    if (!val || val < 1 || val > 10) return alert("1-10 arası puan gir!");
+    if (!val || val < 1 || val > 10) return alert("1-10 arası puan!");
     if (hedef === currentUser) return alert("Kendine puan veremezsin!");
 
-    // ⏳ 5 Gün kontrolü
-    let kontrol = await db.collection("ratingLocks")
-        .where("from", "==", currentUser)
-        .where("to", "==", hedef)
-        .get();
+    let kontrol = CACHE.ratings.filter(
+        r => r.from === currentUser && r.to === hedef
+    )[0];
 
-    if (!kontrol.empty) {
-        let veri = kontrol.docs[0].data();
-        let lastDate = new Date(veri.date);
-        let now = new Date();
-
-        let diffDays = Math.floor((now - lastDate) / (1000 * 60 * 60 * 24));
+    if (kontrol) {
+        let lastDate = new Date(kontrol.date);
+        let diffDays = Math.floor((Date.now() - lastDate) / 86400000);
 
         if (diffDays < 5) {
-            return alert(`Bu oyuncuya tekrar puan verebilmek için ${5 - diffDays} gün daha beklemelisin.`);
+            return alert(`Tekrar puan verebilmek için ${5 - diffDays} gün daha bekle.`);
         }
     }
 
-    // 🔥 PUANI EKLE
     await db.collection("ratings").add({
         from: currentUser,
         to: hedef,
@@ -445,182 +375,64 @@ async function puanGonder() {
         date: new Date().toISOString()
     });
 
-    // 🔥 PUAN KİLİDİ EKLE / GÜNCELLE
-    if (!kontrol.empty) {
-        await db.collection("ratingLocks").doc(kontrol.docs[0].id).update({
-            date: new Date().toISOString()
-        });
-    } else {
-        await db.collection("ratingLocks").add({
-            from: currentUser,
-            to: hedef,
-            date: new Date().toISOString()
-        });
-    }
-
-    document.getElementById("puanValue").value = "";
-
+    await refreshCache();
     await loadGecmis();
     await loadEnIyi();
 
+    document.getElementById("puanValue").value = "";
     notify("Puan Gönderildi");
 }
 
-
-
-
-/* ==========================================================
-   GEÇMİŞ
-========================================================== */
+// ==========================================================
+// GEÇMİŞ
+// ==========================================================
 async function loadGecmis() {
     const list = document.getElementById("gecmisList");
     list.innerHTML = "";
 
-    const snap = await db.collection("ratings").orderBy("date", "desc").get();
+    let sorted = [...CACHE.ratings].sort(
+        (a, b) => new Date(b.date) - new Date(a.date)
+    );
 
-    snap.forEach(doc => {
-        const r = doc.data();
+    sorted.forEach(r => {
         list.innerHTML += `
             <li>${r.from} → ${r.to} | ${r.score} puan | ${r.date.slice(0, 10)}</li>
         `;
     });
 }
 
-async function updatePhoto() {
-    if (currentUser === "ADMIN") {
-        alert("Admin fotoğraf güncelleyemez.");
-        return;
-    }
-
-    let file = document.getElementById("profilUpload").files[0];
-    if (!file) return alert("Fotoğraf seç!");
-
-    const btn = document.querySelector("#profilim .btn");
-    btn.classList.add("loading");
-    btn.innerText = "Güncelleniyor...";
-
-    try {
-        // 🔥 Foto yükleniyor
-        const uploaded = await upload.uploadFile(file);
-        const url = uploaded.fileUrl;
-
-        // 🔥 Veritabanına kaydet
-        const snap = await db.collection("players")
-            .where("name", "==", currentUser)
-            .get();
-
-        snap.forEach(doc => {
-            db.collection("players").doc(doc.id).update({ photo: url });
-        });
-
-        notify("Fotoğraf Güncellendi");
-        loadProfil();
-
-    } catch (err) {
-        alert("Foto yüklenirken hata oluştu!");
-        console.error(err);
-    }
-
-    // 🔥 Butonu normale döndür
-    btn.classList.remove("loading");
-    btn.innerText = "Fotoğrafı Güncelle";
-}
-
-
-
-
-/* ==========================================================
-   OYUNCU EKLE
-========================================================== */
-async function addPlayer() {
-    let name = document.getElementById("newPlayerName").value.trim();
-    let file = document.getElementById("newPlayerPhoto").files[0];
-
-    if (!name) return;
-
-    let photoURL = DEFAULT_PHOTO;
-
-    if (file) {
-        const uploaded = await upload.uploadFile(file);
-        photoURL = uploaded.fileUrl;
-    }
-
-    await db.collection("players").add({ name, photo: photoURL });
-
-    document.getElementById("newPlayerName").value = "";
-    document.getElementById("newPlayerPhoto").value = "";
-
-    loadAll();
-    notify("Oyuncu Eklendi");
-}
-
-async function resetAllData() {
-
-    if (!confirm("Tüm puanlar, gol & asistler ve kazananlar SİLİNECEK. Emin misin?")) {
-        return;
-    }
-
-    // PUANLAR (ratings)
-    let ratings = await db.collection("ratings").get();
-    ratings.forEach(doc => db.collection("ratings").doc(doc.id).delete());
-
-    // GOL & ASİST (ga)
-    let ga = await db.collection("ga").get();
-    ga.forEach(doc => db.collection("ga").doc(doc.id).delete());
-
-    // KAZANANLAR (winners)
-    let winners = await db.collection("winners").get();
-    winners.forEach(doc => db.collection("winners").doc(doc.id).delete());
-
-    // PUAN KİLİTLERİ (ratingLocks) — istersen silinir
-    let locks = await db.collection("ratingLocks").get();
-    locks.forEach(doc => db.collection("ratingLocks").doc(doc.id).delete());
-
-    // SAYFALARI GÜNCELLE
-    await loadAll();
-
-    notify("Tüm veriler sıfırlandı!");
-}
-
-
-/* ==========================================================
-   OYUNCU SİL
-========================================================== */
+// ==========================================================
+// OYUNCU SİL
+// ==========================================================
 async function deletePlayer() {
     let name = selects["deleteUser"].value;
     if (!name) return alert("Oyuncu seç!");
 
-    // Player
-    let snap = await db.collection("players").where("name", "==", name).get();
-    snap.forEach(d => db.collection("players").doc(d.id).delete());
+    let p = CACHE.players.find(x => x.name === name);
+    if (p) await db.collection("players").doc(p.id).delete();
 
-    // Ratings
-    let r1 = await db.collection("ratings").where("from", "==", name).get();
-    r1.forEach(d => db.collection("ratings").doc(d.id).delete());
+    CACHE.ratings
+        .filter(x => x.from === name || x.to === name)
+        .forEach(r => db.collection("ratings").doc(r.id).delete());
 
-    let r2 = await db.collection("ratings").where("to", "==", name).get();
-    r2.forEach(d => db.collection("ratings").doc(d.id).delete());
+    CACHE.ga
+        .filter(x => x.name === name)
+        .forEach(g => db.collection("ga").doc(g.id).delete());
 
-    // GA
-    let ga = await db.collection("ga").where("name", "==", name).get();
-    ga.forEach(d => db.collection("ga").doc(d.id).delete());
-
-    // Winners array cleanup
-    let w = await db.collection("winners").get();
-    w.forEach(d => {
-        let arr = d.data().players.filter(x => x !== name);
-        db.collection("winners").doc(d.id).update({ players: arr });
+    CACHE.winners.forEach(w => {
+        if (w.players.includes(name)) {
+            let arr = w.players.filter(x => x !== name);
+            db.collection("winners").doc(w.id).update({ players: arr });
+        }
     });
 
-    loadAll();
+    await loadAll();
     notify("Oyuncu Silindi");
 }
 
-
-
-/* ==========================================================
-   GOL-ASİST EKLE
-========================================================== */
+// ==========================================================
+// GOL-ASİST EKLE
+// ==========================================================
 async function ekleGolAsist() {
     let name = selects["gaPlayer"].value;
     let gol = Number(document.getElementById("gaGol").value);
@@ -628,40 +440,32 @@ async function ekleGolAsist() {
 
     if (!name) return alert("Oyuncu seç!");
 
-    let photo = DEFAULT_PHOTO;
+    let p = CACHE.players.find(x => x.name === name);
 
-    const snap = await db.collection("players").where("name", "==", name).get();
-    snap.forEach(d => {
-        if (d.data().photo) photo = d.data().photo;
+    await db.collection("ga").add({
+        name,
+        gol,
+        asist,
+        photo: p?.photo || DEFAULT_PHOTO
     });
-
-    await db.collection("ga").add({ name, gol, asist, photo });
 
     document.getElementById("gaGol").value = "";
     document.getElementById("gaAsist").value = "";
 
-    loadGolKr();
-    loadAsistKr();
-    loadEnIyi();
-
+    await loadAll();
     notify("Kaydedildi");
 }
 
-
-
-/* ==========================================================
-   GOL KRALLIĞI
-========================================================== */
+// ==========================================================
+// GOL KRALLIĞI
+// ==========================================================
 async function loadGolKr() {
     const box = document.getElementById("golList");
     box.innerHTML = "";
 
-    const snap = await db.collection("ga").get();
-
     let map = {};
 
-    snap.forEach(doc => {
-        const d = doc.data();
+    CACHE.ga.forEach(d => {
         if (!map[d.name]) map[d.name] = { gol: 0, photo: d.photo };
         map[d.name].gol += d.gol;
     });
@@ -675,7 +479,7 @@ async function loadGolKr() {
     arr.sort((a, b) => b.gol - a.gol);
 
     arr.forEach(d => {
-		 if (d.asist <= 0) return;
+        if (d.gol <= 0) return;
         box.innerHTML += `
             <div class="kr-item">
                 <div class="kr-left">
@@ -688,47 +492,30 @@ async function loadGolKr() {
     });
 }
 
-
-
-/* ==========================================================
-   ASİST KRALLIĞI
-========================================================== */
+// ==========================================================
+// ASİST KRALLIĞI
+// ==========================================================
 async function loadAsistKr() {
     const box = document.getElementById("asistList");
     box.innerHTML = "";
 
-    const snap = await db.collection("ga").get();
-
     let map = {};
 
-    snap.forEach(doc => {
-        const d = doc.data();
-
-        // Asist boşsa 0 yap
-        let asist = Number(d.asist) || 0;
-
-        if (!map[d.name]) {
-            map[d.name] = {
-                asist: 0,
-                photo: d.photo || DEFAULT_PHOTO
-            };
-        }
-
-        map[d.name].asist += asist;
+    CACHE.ga.forEach(d => {
+        if (!map[d.name]) map[d.name] = { asist: 0, photo: d.photo };
+        map[d.name].asist += d.asist;
     });
 
     let arr = Object.entries(map).map(([name, data]) => ({
         name,
         photo: data.photo,
-        asist: Number(data.asist) || 0
+        asist: data.asist
     }));
 
-    // Büyükten küçüğe sırala
     arr.sort((a, b) => b.asist - a.asist);
 
     arr.forEach(d => {
-        if (d.asist <= 0) return; // 0 asist varsa gösterme
-
+        if (d.asist <= 0) return;
         box.innerHTML += `
             <div class="kr-item">
                 <div class="kr-left">
@@ -741,70 +528,55 @@ async function loadAsistKr() {
     });
 }
 
-
-async function profilFotoGuncelle() {
-    let file = document.getElementById("profilYeniFoto").files[0];
-    if (!file) return alert("Fotoğraf seç!");
-
-    const uploaded = await upload.uploadFile(file);
-    let url = uploaded.fileUrl;
-
-    const snap = await db.collection("players")
-        .where("name", "==", currentUser)
-        .get();
-
-    if (snap.empty) return;
-
-    let id = snap.docs[0].id;
-
-    await db.collection("players").doc(id).update({ photo: url });
-
-    notify("Fotoğraf Güncellendi");
-
-    loadProfil();
-    loadPlayers();
-}
-
-
-
-
-
-/* ==========================================================
-   EN İYİ OYUNCULAR
-========================================================== */
+// ==========================================================
+// EN İYİ OYUNCULAR — MEGA OPTIMIZED
+// ==========================================================
 async function loadEnIyi() {
     const box = document.getElementById("eniyiList");
     box.innerHTML = "";
 
-    const players = await db.collection("players").get();
-    let arr = [];
+    let gaMap = {};
+    CACHE.ga.forEach(d => {
+        if (!gaMap[d.name]) gaMap[d.name] = { gol: 0, asist: 0 };
+        gaMap[d.name].gol += d.gol;
+        gaMap[d.name].asist += d.asist;
+    });
 
-    for (let doc of players.docs) {
-        let name = doc.data().name;
-        let photo = doc.data().photo || DEFAULT_PHOTO;
+    let ratingMap = {};
+    CACHE.ratings.forEach(r => {
+        if (!ratingMap[r.to]) ratingMap[r.to] = [];
+        ratingMap[r.to].push(r.score);
+    });
 
-        let ga = await db.collection("ga").where("name", "==", name).get();
-        let rating = await db.collection("ratings").where("to", "==", name).get();
-        let win = await db.collection("winners").where("players", "array-contains", name).get();
+    let winMap = {};
+    CACHE.winners.forEach(w => {
+        w.players.forEach(name => {
+            if (!winMap[name]) winMap[name] = 0;
+            winMap[name]++;
+        });
+    });
 
-        let g = 0, a = 0;
-        ga.forEach(s => { g += s.data().gol; a += s.data().asist; });
+    let arr = CACHE.players.map(p => {
+        let g = gaMap[p.name]?.gol || 0;
+        let a = gaMap[p.name]?.asist || 0;
+        let scores = ratingMap[p.name] || [];
+        let avg = scores.length ? scores.reduce((x, y) => x + y) / scores.length : 0;
+        let wins = winMap[p.name] || 0;
 
-        let scores = [];
-        rating.forEach(s => scores.push(s.data().score));
-        let avg = scores.length ? (scores.reduce((x,y) => x+y) / scores.length) : 0;
+        let total = (g * 2) + a + (wins * 5) + avg;
 
-        let total = (g * 2) + (a * 1) + (win.size * 5) + avg;
+        return {
+            name: p.name,
+            photo: p.photo || DEFAULT_PHOTO,
+            total
+        };
+    });
 
-        arr.push({ name, photo, total });
-    }
-
-    arr.sort((a,b) => b.total - a.total);
+    arr.sort((a, b) => b.total - a.total);
 
     arr.forEach(p => {
-		if (p.total <= 0) return;
+        if (p.total <= 0) return;
         box.innerHTML += `
-		
             <div class="kr-item">
                 <div class="kr-left">
                     <img class="kr-photo" src="${p.photo}">
@@ -816,33 +588,34 @@ async function loadEnIyi() {
     });
 }
 
-
-
-/* ==========================================================
-   KAZANANLAR
-========================================================== */
+// ==========================================================
+// KAZANANLAR
+// ==========================================================
 async function loadKazananlar() {
     const box = document.getElementById("kazananList");
     box.innerHTML = "";
 
-    const players = await db.collection("players").get();
-    let arr = [];
+    let winMap = {};
 
-    for (let doc of players.docs) {
-        let name = doc.data().name;
-        let photo = doc.data().photo || DEFAULT_PHOTO;
+    CACHE.winners.forEach(w => {
+        w.players.forEach(name => {
+            if (!winMap[name]) winMap[name] = 0;
+            winMap[name]++;
+        });
+    });
 
-        let wins = await db.collection("winners").where("players", "array-contains", name).get();
+    let arr = CACHE.players
+        .map(p => ({
+            name: p.name,
+            photo: p.photo || DEFAULT_PHOTO,
+            total: winMap[p.name] || 0
+        }))
+        .filter(p => p.total > 0);
 
-        arr.push({ name, photo, total: wins.size });
-    }
-
-    arr.sort((a,b) => b.total - a.total);
+    arr.sort((a, b) => b.total - a.total);
 
     arr.forEach(p => {
-		if (p.total <= 0) return;
         box.innerHTML += `
-		
             <div class="kr-item">
                 <div class="kr-left">
                     <img class="kr-photo" src="${p.photo}">
@@ -854,11 +627,9 @@ async function loadKazananlar() {
     });
 }
 
-
-
-/* ==========================================================
-   KAZANAN EKLE
-========================================================== */
+// ==========================================================
+// KAZANAN KAYDET
+// ==========================================================
 async function kazananKaydet() {
     let arr = multiSelects["winnerSelect"].values;
     if (!arr.length) return alert("Oyuncu seç!");
@@ -868,26 +639,21 @@ async function kazananKaydet() {
         date: new Date().toISOString()
     });
 
-    loadKazananlar();
-    loadEnIyi();
+    await loadAll();
     notify("Kaydedildi");
 }
 
-
-
-/* ==========================================================
-   ÇIKIŞ
-========================================================== */
+// ==========================================================
+// LOGOUT
+// ==========================================================
 function logout() {
-
-    window.stop(); // ✨ Yenileme sonrası eski sayfanın açılmasını tamamen durdurur
+    window.stop();
 
     localStorage.removeItem("hsUser");
     localStorage.removeItem("hsPage");
     currentUser = null;
 
     hideAdminButtons();
-
     document.getElementById("navbar").style.display = "none";
 
     document.querySelectorAll(".page").forEach(p => {
@@ -901,4 +667,3 @@ function logout() {
 
     notify("Çıkış Yapıldı");
 }
-

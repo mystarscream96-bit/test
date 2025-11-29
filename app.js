@@ -538,47 +538,41 @@ async function loadEnIyi() {
     const box = document.getElementById("eniyiList");
     box.innerHTML = "";
 
-    let gaMap = {};
-    CACHE.ga.forEach(d => {
-        if (!gaMap[d.name]) gaMap[d.name] = { gol: 0, asist: 0 };
-        gaMap[d.name].gol += d.gol;
-        gaMap[d.name].asist += d.asist;
-    });
+    let arr = [];
 
-    let ratingMap = {};
-    CACHE.ratings.forEach(r => {
-        if (!ratingMap[r.to]) ratingMap[r.to] = [];
-        ratingMap[r.to].push(r.score);
-    });
+    CACHE.players.forEach(player => {
+        let name = player.name;
+        let photo = player.photo || DEFAULT_PHOTO;
 
-    let winMap = {};
-    CACHE.winners.forEach(w => {
-        w.players.forEach(name => {
-            if (!winMap[name]) winMap[name] = 0;
-            winMap[name]++;
+        // PUAN TOPLAMI
+        let userRatings = CACHE.ratings.filter(r => r.to === name);
+        let totalPoints = userRatings.reduce((t, r) => t + Number(r.score), 0);
+
+        // GOL + ASİST
+        let userGA = CACHE.ga.filter(g => g.name === name);
+        let totalGol = userGA.reduce((t, g) => t + Number(g.gol), 0);
+        let totalAsist = userGA.reduce((t, g) => t + Number(g.asist), 0);
+
+        // KAZANANLAR
+        let winCount = CACHE.winners.filter(w => w.players.includes(name)).length;
+
+        // TOPLAM PUAN FORMÜLÜ
+        let finalScore =
+            totalPoints +        // verilen puan toplamı
+            totalGol * 2 +       // gol
+            totalAsist * 1 +     // asist
+            winCount * 5;        // kazanan bonus
+
+        arr.push({
+            name,
+            photo,
+            total: finalScore
         });
-    });
-
-    let arr = CACHE.players.map(p => {
-        let g = gaMap[p.name]?.gol || 0;
-        let a = gaMap[p.name]?.asist || 0;
-        let scores = ratingMap[p.name] || [];
-        let avg = scores.length ? scores.reduce((x, y) => x + y) / scores.length : 0;
-        let wins = winMap[p.name] || 0;
-
-        let total = (g * 2) + a + (wins * 5) + avg;
-
-        return {
-            name: p.name,
-            photo: p.photo || DEFAULT_PHOTO,
-            total
-        };
     });
 
     arr.sort((a, b) => b.total - a.total);
 
     arr.forEach(p => {
-        if (p.total <= 0) return;
         box.innerHTML += `
             <div class="kr-item">
                 <div class="kr-left">
@@ -590,6 +584,7 @@ async function loadEnIyi() {
         `;
     });
 }
+
 
 // ==========================================================
 // KAZANANLAR

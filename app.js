@@ -468,9 +468,9 @@ async function loadGolKr() {
 
     let map = {};
 
-    CACHE.ga.forEach(d => {
-        if (!map[d.name]) map[d.name] = { gol: 0, photo: d.photo };
-        map[d.name].gol += d.gol;
+    CACHE.ga.forEach(g => {
+        if (!map[g.name]) map[g.name] = { gol: 0, photo: g.photo };
+        map[g.name].gol += Number(g.gol);   // 🔥 kesin çözüm
     });
 
     let arr = Object.entries(map).map(([name, data]) => ({
@@ -479,21 +479,24 @@ async function loadGolKr() {
         gol: data.gol
     }));
 
-    arr.sort((a, b) => b.gol - a.gol);
+    // 0 olanları gizle + sırala
+    arr = arr
+        .filter(p => p.gol > 0)
+        .sort((a, b) => b.gol - a.gol);
 
-    arr.forEach(d => {
-        if (d.gol <= 0) return;
+    arr.forEach(p => {
         box.innerHTML += `
             <div class="kr-item">
                 <div class="kr-left">
-                    <img class="kr-photo" src="${d.photo}">
-                    <div class="kr-name">${d.name}</div>
+                    <img class="kr-photo" src="${p.photo}">
+                    <div class="kr-name">${p.name}</div>
                 </div>
-                <div class="kr-score">${d.gol}</div>
+                <div class="kr-score">${p.gol}</div>
             </div>
         `;
     });
 }
+
 
 // ==========================================================
 // ASİST KRALLIĞI
@@ -560,7 +563,7 @@ async function loadEnIyi() {
         let finalScore =
             totalPoints +
             (totalGol * 2) +
-            (totalAsist * 1) +
+            totalAsist +
             (winCount * 5);
 
         arr.push({
@@ -570,12 +573,12 @@ async function loadEnIyi() {
         });
     });
 
-    // 🔥 0 PUANLI OYUNCULARI ÇIKAR + SIRALA
+    // 0 PUANLILARI KALDIR + SIRALA
     arr = arr
-        .filter(p => p.total > 0)      // Sıfır olanlar tamamen gizlenir
-        .sort((a, b) => b.total - a.total);  // Büyükten küçüğe sırala
+        .filter(p => p.total > 0)
+        .sort((a, b) => b.total - a.total);
 
-    // 🔥 EKRANA BAS
+    // EKRANA BAS
     arr.forEach(p => {
         box.innerHTML += `
             <div class="kr-item">
@@ -588,6 +591,7 @@ async function loadEnIyi() {
         `;
     });
 }
+
 
 
 

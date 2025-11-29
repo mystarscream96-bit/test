@@ -1,7 +1,3 @@
-// ==============================
-//  Firebase – Final Setup
-// ==============================
-
 const firebaseConfig = {
     apiKey: "AIzaSyCbMPp-kGJK4bmHpNsnzHhtxzYSOSfOc6g",
     authDomain: "halisaha-d4ba0.firebaseapp.com",
@@ -11,8 +7,4 @@ const firebaseConfig = {
     appId: "1:1046842011530:web:c885d3b9de803343f12273"
 };
 
-// Firebase başlat
 firebase.initializeApp(firebaseConfig);
-
-// Firestore bağlantısını global değişkene ver
-window.db = firebase.firestore();

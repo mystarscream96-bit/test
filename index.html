@@ -53,7 +53,7 @@
 
     <!-- Profil sadece kullanıcıya gösterilecek -->
     <button id="profilBtn" class="nav-btn" onclick="showPage('profilim')">Profilim</button>
-
+	
     <button class="nav-btn" onclick="showPage('oyuncular')">Oyuncular</button>
     <button class="nav-btn" onclick="showPage('puan')">Puan Ver</button>
     <button class="nav-btn" onclick="showPage('gecmis')">Puan Geçmişi</button>
@@ -71,60 +71,83 @@
     <button class="nav-btn logout-btn" onclick="logout()">Çıkış</button>
 </div>
 
-
 <!-- PROFİL EKRANI -->
-<div id="profilim" class="page">
+<div id="profilim" class="page active">
     <h2>Profilim</h2>
 
-    <div id="profilContainer" class="profil-box">
-        <img id="profilPhoto" class="profil-photo" src="">
-        <h3 id="profilName"></h3>
+    <div class="profil-box">
 
-        <input id="profilUpload" type="file" accept="image/*">
+        <!-- SOL TARAF -->
+        <div class="profil-left">
+            <img id="profilPhoto" class="profil-photo" src="">
+            <input id="profilUpload" type="file" accept="image/*">
+            <button class="btn" onclick="updatePhoto()">Fotoğrafı Güncelle</button>
+        </div>
 
-        <button class="btn" onclick="updatePhoto()">Fotoğrafı Güncelle</button>
-        <div class="field">
-  <!-- Forvetler -->
-  <button class="pos" data-pos="ST">ST</button>
-  <button class="pos" data-pos="CF">CF</button>
+        <!-- SAĞ TARAF -->
+        <div class="profil-right">
+            <div class="fm-wrapper">
 
-  <!-- Orta saha -->
-  <button class="pos" data-pos="CAM">CAM</button>
-  <button class="pos" data-pos="CM-L">CM</button>
-  <button class="pos" data-pos="CM-R">CM</button>
+                <div class="fm-field">
 
-  <!-- Kanatlar -->
-  <button class="pos" data-pos="LW">LW</button>
-  <button class="pos" data-pos="RW">RW</button>
+                    <!-- BUTONLAR -->
+                    <div class="fm-card" data-pos="ST" data-name="Santrafor">Santrafor</div>
 
-  <!-- Defans -->
-  <button class="pos" data-pos="LB">LB</button>
-  <button class="pos" data-pos="CB-L">CB</button>
-  <button class="pos" data-pos="CB-R">CB</button>
-  <button class="pos" data-pos="RB">RB</button>
+					
 
-  <!-- Kaleci -->
-  <button class="pos" data-pos="GK">GK</button>
+                   
+                    <div class="fm-card" data-pos="CM-R" data-name="Merkez Orta">Merkez Orta</div>
+
+                    <div class="fm-card" data-pos="LW" data-name="Sol Kanat">Sol Kanat</div>
+                    <div class="fm-card" data-pos="RW" data-name="Sağ Kanat">Sağ Kanat</div>
+
+                    <div class="fm-card" data-pos="LB" data-name="Sol Bek">Sol Bek</div>
+      
+                    <div class="fm-card" data-pos="CB-R" data-name="Stoper">Stoper</div>
+                    <div class="fm-card" data-pos="RB" data-name="Sağ Bek">Sağ Bek</div>
+
+                    <div class="fm-card" data-pos="GK" data-name="Kaleci">Kaleci</div>
+
+                </div>
+
+               <div class="fm-selection">
+
+    <div class="fm-input-group">
+        <label>Asıl Mevki</label>
+        <input id="mainPos" readonly>
+    </div>
+
+    <div class="fm-input-group">
+        <label>Yedek Mevki</label>
+        <input id="subPos" readonly>
+    </div>
+
+    <button class="btn" onclick="savePositions()">Mevkileri Kaydet</button>
+
 </div>
 
-<div class="selection-panel">
-  <div>
-    <label>Asıl Mevki:</label>
-    <input id="mainPos" readonly>
-  </div>
-  <div>
-    <label>Yedek Mevki:</label>
-    <input id="subPos" readonly>
-  </div>
-</div>
+				
+
+
+            </div>
+        </div>
     </div>
 </div>
+
+
+
+
+
+
+
+
 
 
 <!-- OYUNCULAR -->
 <div id="oyuncular" class="page">
     <h2>Oyuncular</h2>
     <div id="oyuncuListe" class="card-grid"></div>
+	
 </div>
 
 

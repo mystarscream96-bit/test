@@ -47,6 +47,70 @@ body {
     z-index: 1000;
     box-shadow: 0 0 12px #8a2bff;
 }
+.field {
+  width: 330px;
+  height: 500px;
+  margin: auto;
+  background: #0b8f3a;
+  border-radius: 10px;
+  position: relative;
+  padding: 15px;
+  box-shadow: 0 0 10px #000;
+}
+
+.pos {
+  position: absolute;
+  padding: 8px 12px;
+  border: none;
+  background: #3c3cbb;
+  color: white;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: 0.2s;
+}
+
+.pos.selected-main {
+  background: #ff8c00 !important;
+}
+
+.pos.selected-sub {
+  background: #00b7ff !important;
+}
+
+/* Pozisyonlandırmalar */
+
+.field button[data-pos="ST"] { top: 30px; left: 130px; }
+.field button[data-pos="CF"] { top: 80px; left: 130px; }
+
+.field button[data-pos="CAM"] { top: 140px; left: 130px; }
+.field button[data-pos="CM-L"] { top: 200px; left: 60px; }
+.field button[data-pos="CM-R"] { top: 200px; left: 200px; }
+
+.field button[data-pos="LW"] { top: 260px; left: 20px; }
+.field button[data-pos="RW"] { top: 260px; left: 240px; }
+
+.field button[data-pos="LB"] { top: 330px; left: 20px; }
+.field button[data-pos="CB-L"] { top: 330px; left: 100px; }
+.field button[data-pos="CB-R"] { top: 330px; left: 180px; }
+.field button[data-pos="RB"] { top: 330px; left: 260px; }
+
+.field button[data-pos="GK"] { top: 410px; left: 130px; }
+
+.selection-panel {
+  margin-top: 20px;
+  display: flex;
+  justify-content: space-around;
+}
+
+.selection-panel input {
+  padding: 8px;
+  width: 120px;
+  text-align: center;
+  border-radius: 5px;
+  border: 1px solid #888;
+  font-weight: bold;
+}
 
 /* ============================================
    NAV
@@ -469,4 +533,5 @@ input {
         padding: 20px !important;
     }
 }
+
 

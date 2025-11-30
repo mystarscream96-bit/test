@@ -23,52 +23,76 @@ let CACHE = {
     ga: [],
     winners: []
 };
-const mainPosInput = document.getElementById("mainPos");
-const subPosInput = document.getElementById("subPos");
-const buttons = document.querySelectorAll(".pos");
+/* ============================================
+   FM24 MEVKİ SEÇİM — PERFECT RESET SYSTEM
+============================================ */
+/* ============================================
+   FM24 MEVKİ SEÇİM — 3. MEVKİ ENGELLİ FINAL
+============================================ */
+const cards = document.querySelectorAll(".fm-card");
+const mainInput = document.getElementById("mainPos");
+const subInput = document.getElementById("subPos");
 
-function loadPositions() {
-  const mainPos = localStorage.getItem("mainPos");
-  const subPos = localStorage.getItem("subPos");
+cards.forEach(card => {
+    card.addEventListener("click", () => {
 
-  if (mainPos) {
-    mainPosInput.value = mainPos;
-    document.querySelector(`.pos[data-pos="${mainPos}"]`)
-      ?.classList.add("selected-main");
-  }
+        const pos = card.dataset.name;
 
-  if (subPos) {
-    subPosInput.value = subPos;
-    document.querySelector(`.pos[data-pos="${subPos}"]`)
-      ?.classList.add("selected-sub");
-  }
-}
+        const isMainSelected = card.classList.contains("selected-main");
+        const isSubSelected  = card.classList.contains("selected-sub");
 
-buttons.forEach(btn => {
-  btn.addEventListener("click", () => {
-    const pos = btn.dataset.pos;
+        /* =============================
+           1) SEÇİLİ OLAN TEKRAR TIKLANDI
+        ============================== */
+        if (isMainSelected) {
+            mainInput.value = "";
+            card.classList.remove("selected-main");
+            return;
+        }
 
-    // Asıl boşsa oraya yaz
-    if (!mainPosInput.value) {
-      mainPosInput.value = pos;
-      localStorage.setItem("mainPos", pos);
-      btn.classList.add("selected-main");
-      return;
-    }
+        if (isSubSelected) {
+            subInput.value = "";
+            card.classList.remove("selected-sub");
+            return;
+        }
 
-    // Asıl doluysa yedek yaz
-    if (!subPosInput.value) {
-      subPosInput.value = pos;
-      localStorage.setItem("subPos", pos);
-      btn.classList.add("selected-sub");
-      return;
-    }
+        /* =============================
+           2) NORMAL SEÇİM AKIŞI
+        ============================== */
 
-    alert("Zaten iki pozisyon seçtiniz!");
-  });
+        // Asıl mevki boşsa → Asılı doldur
+        if (mainInput.value === "") {
+            mainInput.value = pos;
+
+            cards.forEach(c => c.classList.remove("selected-main"));
+            card.classList.add("selected-main");
+            return;
+        }
+
+        // Yedek mevki boşsa → Yedeği doldur
+        if (subInput.value === "") {
+            subInput.value = pos;
+
+            cards.forEach(c => c.classList.remove("selected-sub"));
+            card.classList.add("selected-sub");
+            return;
+        }
+
+        /* =============================
+           3) ASIL + YEDEK DOLUYSA → SEÇİM İZİN YOK
+        ============================== */
+
+        console.log("3. mevki seçilmesine izin verilmiyor.");
+        return;
+
+    });
 });
 
-loadPositions();
+
+
+
+
+
 
 // Tek seferde tüm verileri yükler
 async function refreshCache() {
@@ -214,10 +238,16 @@ function showPage(id) {
         return;
     }
 
+    // 🔥 PROFİLE GEÇİNCE PROFİLİ YÜKLE
+    if (id === "profilim") {
+        loadProfil();
+    }
+
     if (id !== "login") {
         localStorage.setItem("hsPage", id);
     }
 }
+
 
 // ==========================================================
 // PROFIL
@@ -225,16 +255,56 @@ function showPage(id) {
 async function loadProfil() {
     if (!currentUser || currentUser === "ADMIN") {
         document.getElementById("profilPhoto").src = DEFAULT_PHOTO;
-        document.getElementById("profilName").innerText = "Admin";
         return;
     }
 
-    let p = CACHE.players.find(x => x.name === currentUser);
+    const p = CACHE.players.find(x => x.name === currentUser);
     if (!p) return;
 
+    // Foto
     document.getElementById("profilPhoto").src = p.photo || DEFAULT_PHOTO;
-    document.getElementById("profilName").innerText = p.name;
+
+    // Pozisyon Input'ları
+    document.getElementById("mainPos").value = p.mainPos || "";
+    document.getElementById("subPos").value  = p.subPos  || "";
+
+    // Kartları işaretle
+    highlightSavedPositions(p.mainPos, p.subPos);
 }
+
+
+function markSelectedCards() {
+    const main = document.getElementById("mainPos").value;
+    const sub  = document.getElementById("subPos").value;
+
+    cards.forEach(card => {
+        card.classList.remove("selected-main", "selected-sub");
+
+        if (card.dataset.name === main)
+            card.classList.add("selected-main");
+
+        if (card.dataset.name === sub)
+            card.classList.add("selected-sub");
+    });
+}
+
+function highlightSavedPositions(mainP, subP) {
+    cards.forEach(card => {
+        card.classList.remove("selected-main");
+        card.classList.remove("selected-sub");
+
+        let name = card.dataset.name;
+
+        if (name === mainP) {
+            card.classList.add("selected-main");
+        }
+
+        if (name === subP) {
+            card.classList.add("selected-sub");
+        }
+    });
+}
+
 
 // ==========================================================
 // LOGIN
@@ -384,14 +454,21 @@ async function loadPlayers() {
 
     CACHE.players.forEach(p => {
         const photo = p.photo || DEFAULT_PHOTO;
+
         box.innerHTML += `
             <div class="card">
                 <img src="${photo}">
                 <h3>${p.name}</h3>
+
+                <div class="player-pos">
+                    <p><strong>Asıl Mevki:</strong> ${p.mainPos || '-'}</p>
+                    <p><strong>Yedek Mevki:</strong> ${p.subPos || '-'}</p>
+                </div>
             </div>
         `;
     });
 }
+
 
 // ==========================================================
 // PUAN GÖNDER
@@ -720,3 +797,55 @@ function logout() {
 
     notify("Çıkış Yapıldı");
 }
+async function updatePhoto() {
+    const fileInput = document.getElementById("profilUpload");
+    const file = fileInput.files[0];
+    if (!file) return;
+
+    const btn = event.target;
+    btn.classList.add("loading");
+
+    try {
+        const { fileUrl } = await upload.uploadFile(file); // Upload.io
+
+        // Firestore’a kaydet
+        let p = CACHE.players.find(x => x.name === currentUser);
+        if (p) {
+            await db.collection("players").doc(p.id).update({
+                photo: fileUrl
+            });
+        }
+
+        // Ön izleme
+        document.getElementById("profilPhoto").src = fileUrl;
+
+        notify("Fotoğraf Güncellendi");
+    } catch (e) {
+        alert("Fotoğraf yüklenemedi!");
+    }
+
+    btn.classList.remove("loading");
+}
+
+
+async function savePositions() {
+    if (!currentUser) return alert("Kullanıcı bulunamadı!");
+
+    const mainP = document.getElementById("mainPos").value;
+    const subP  = document.getElementById("subPos").value;
+
+    if (!mainP) return alert("Asıl mevki seçmelisin!");
+
+    let p = CACHE.players.find(x => x.name === currentUser);
+    if (!p) return;
+
+    await db.collection("players").doc(p.id).update({
+        mainPos: mainP,
+        subPos: subP
+    });
+
+    notify("Mevkiler Kaydedildi");
+}
+
+
+

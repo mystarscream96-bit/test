@@ -23,6 +23,52 @@ let CACHE = {
     ga: [],
     winners: []
 };
+const mainPosInput = document.getElementById("mainPos");
+const subPosInput = document.getElementById("subPos");
+const buttons = document.querySelectorAll(".pos");
+
+function loadPositions() {
+  const mainPos = localStorage.getItem("mainPos");
+  const subPos = localStorage.getItem("subPos");
+
+  if (mainPos) {
+    mainPosInput.value = mainPos;
+    document.querySelector(`.pos[data-pos="${mainPos}"]`)
+      ?.classList.add("selected-main");
+  }
+
+  if (subPos) {
+    subPosInput.value = subPos;
+    document.querySelector(`.pos[data-pos="${subPos}"]`)
+      ?.classList.add("selected-sub");
+  }
+}
+
+buttons.forEach(btn => {
+  btn.addEventListener("click", () => {
+    const pos = btn.dataset.pos;
+
+    // Asıl boşsa oraya yaz
+    if (!mainPosInput.value) {
+      mainPosInput.value = pos;
+      localStorage.setItem("mainPos", pos);
+      btn.classList.add("selected-main");
+      return;
+    }
+
+    // Asıl doluysa yedek yaz
+    if (!subPosInput.value) {
+      subPosInput.value = pos;
+      localStorage.setItem("subPos", pos);
+      btn.classList.add("selected-sub");
+      return;
+    }
+
+    alert("Zaten iki pozisyon seçtiniz!");
+  });
+});
+
+loadPositions();
 
 // Tek seferde tüm verileri yükler
 async function refreshCache() {

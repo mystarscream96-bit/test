@@ -53,8 +53,8 @@
 
     <!-- Profil sadece kullanıcıya gösterilecek -->
     <button id="profilBtn" class="nav-btn" onclick="showPage('profilim')">Profilim</button>
-	
     <button class="nav-btn" onclick="showPage('oyuncular')">Oyuncular</button>
+	<button class="nav-btn" onclick="showPage('haftaninKadro')">Haftanın Kadrosu</button>
     <button class="nav-btn" onclick="showPage('puan')">Puan Ver</button>
     <button class="nav-btn" onclick="showPage('gecmis')">Puan Geçmişi</button>
     <button class="nav-btn" onclick="showPage('golKr')">Gol Krallığı</button>
@@ -62,6 +62,7 @@
     <button class="nav-btn" onclick="showPage('eniyi')">En İyi Oyuncular</button>
 
     <!-- Admin’e özel -->
+	<button id="kadroBtn" class="nav-btn" onclick="showPage('kadro')">Kadro Düzenleme</button>
     <button id="adminBtn" class="nav-btn admin-only" style="display:none;" onclick="showPage('admin')">Admin Paneli</button>
     <button id="gaBtn" class="nav-btn admin-only" style="display:none;" onclick="showPage('gaYonetim')">Gol Yönetimi</button>
     <button id="winBtn" class="nav-btn admin-only" style="display:none;" onclick="showPage('winYonetim')">Kazanan Yönetimi</button>
@@ -201,10 +202,73 @@
         <button onclick="closeRatePanel()">Kapat</button>
     </div>
 </div>
-
-
-
 </div>
+<div id="haftaninKadro" class="page">
+    <h2>Haftanın Kadrosu</h2>
+
+    <div class="fm-wrapper hafta-wrapper">
+
+        <div class="hkField">
+    <img src="https://i.hizliresim.com/272vnxd.jpg" class="hkFieldImg">
+
+    <!-- 🔥 Oyuncuların yerleştirileceği alan -->
+    <div id="field" class="fieldArea"></div>
+</div>
+
+
+        <!-- A – B Takımı Listeleri -->
+        <div class="teamsRow haftaninTeams">
+            <div class="teamBox">
+                <h3>A Takımı</h3>
+                <div id="haftaTeamA" class="hk-list"></div>
+                <p id="haftaAPower" class="powerText"></p>
+            </div>
+
+            <div class="teamBox">
+                <h3>B Takımı</h3>
+                <div id="haftaTeamB" class="hk-list"></div>
+                <p id="haftaBPower" class="powerText"></p>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+
+
+<!-- KADRO OLUŞTUR -->
+<div id="kadro" class="page">
+    <h2>Kadro Oluştur</h2>
+
+    <div class="kadroWidget">
+
+        <label>Maça Gelecek 16 Oyuncu</label>
+<div id="kadroPlayerGrid" class="player-grid"></div>
+
+
+        <div class="gkRow">
+            <label>A Takımı Kalecisi</label>
+<div class="custom-select" id="gkASelect" data-id="gkA">
+    <div class="custom-display">Kaleci Seç</div>
+    <div class="custom-options"></div>
+</div>
+
+
+            <label>B Takımı Kalecisi</label>
+<div class="custom-select" id="gkBSelect" data-id="gkB">
+    <div class="custom-display">Kaleci Seç</div>
+    <div class="custom-options"></div>
+</div>
+
+        </div>
+
+        <button id="buildBtn">KADROYU OLUŞTUR</button>
+
+
+
+    </div>
+</div>
+
 
 
 <!-- PUAN VER -->

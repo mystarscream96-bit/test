@@ -124,7 +124,7 @@ body {
 .fm-field {
     width: 100%;
     max-width: 350px;
-    height: 540px;
+    height: 450px;
     background: #0a7a33;
     border-radius: 20px;
     box-shadow: 0 0 30px rgba(0,0,0,0.6);
@@ -165,23 +165,7 @@ body {
     box-shadow: 0 0 20px rgba(0,204,255,0.9);
 }
 
-/* —— FM POZİSYON YERLERİ —— */
-.fm-card[data-pos="ST"] { top: 30px; left: 135px; }
-.fm-card[data-pos="CF"] { top: 80px; left: 135px; }
-.fm-card[data-pos="CAM"] { top: 140px; left: 135px; }
 
-.fm-card[data-pos="CM-L"] { top: 210px; left: 60px; }
-.fm-card[data-pos="CM-R"] { top: 210px; left: 210px; }
-
-.fm-card[data-pos="LW"] { top: 280px; left: 15px; }
-.fm-card[data-pos="RW"] { top: 280px; left: 260px; }
-
-.fm-card[data-pos="LB"] { top: 350px; left: 15px; }
-.fm-card[data-pos="CB-L"] { top: 350px; left: 120px; }
-.fm-card[data-pos="CB-R"] { top: 350px; left: 210px; }
-.fm-card[data-pos="RB"] { top: 350px; left: 260px; }
-
-.fm-card[data-pos="GK"] { top: 430px; left: 135px; }
 
 /* —— MEVKİ SEÇİMİ —— */
 .fm-selection {
@@ -743,29 +727,7 @@ body {
 }
 
 /* SAHA ARKA PLAN + ÇİZGİLER (FM24 TARZI) */
-.fm-field {
-    position: relative;
-    width: 380px;
-    height: 580px;
-    border-radius: 20px;
-    background:
-        /* orta çizgi */
-        linear-gradient(to bottom, transparent 49%, rgba(255,255,255,.25) 50%, transparent 51%),
-        /* ceza sahaları */
-        radial-gradient(circle at 50% 14%, rgba(255,255,255,.15) 0%, transparent 60%),
-        radial-gradient(circle at 50% 86%, rgba(255,255,255,.15) 0%, transparent 60%),
-        /* hafif dikey çizgiler */
-        repeating-linear-gradient(
-            to bottom,
-            rgba(255,255,255,.10) 0px,
-            rgba(255,255,255,.10) 2px,
-            transparent 2px,
-            transparent 28px
-        ),
-        /* çim */
-        #0a7a33;
-    box-shadow: 0 0 25px rgba(0,0,0,.6);
-}
+
 
 /* ============================================================
    FM 3D LIVERPOOL FORMA KARTLARI
@@ -809,32 +771,9 @@ body {
 /* ============================================
    SAĞ TARAF (SAHA)
 ============================================ */
-#profilim .profil-right {
-    flex: 1;
-    display: flex;
-    justify-content: center;
-}
 
-#profilim .fm-field {
-    width: 350px;
-    height: 450px;
-    border-radius: 20px;
-    position: relative;
 
-    background:
-        linear-gradient(to bottom, transparent 49%, rgba(255,255,255,0.22) 50%, transparent 51%),
-        repeating-linear-gradient(
-            to bottom,
-            rgba(255,255,255,0.08) 0,
-            rgba(255,255,255,0.08) 2px,
-            transparent 2px,
-            transparent 26px
-        ),
-        #0a7a33;
 
-    border: 2px solid rgba(255,255,255,0.15);
-    box-shadow: 0 0 25px rgba(0,0,0,0.5);
-}
 
 /* ============================================
    POZİSYON KARTLARI — FM24 LIVERPOOL FORMA
@@ -873,12 +812,8 @@ body {
 /* ============================================
    POZİSYON KOORDİNATLARI
 ============================================ */
-.fm-card[data-pos="ST"]  { top: 15px; left: 140px; }
-
-
-
-
-.fm-card[data-pos="CM-R"] { top: 150px; left: 140px; }
+.fm-card[data-pos="ST"]  { top: 15px; left: 135px; }
+.fm-card[data-pos="CM-R"] { top: 150px; left: 135px; }
 
 /* Sol kanat aynı – Sağ kanat sağa açıldı */
 .fm-card[data-pos="LW"] { top: 110px; left: 10px; }
@@ -887,10 +822,9 @@ body {
 /* Sol bek aynı – Sağ bek +25px sağa kaydırıldı */
 .fm-card[data-pos="LB"]   { top: 270px; left: 10px; }
 
-.fm-card[data-pos="CB-R"] { top: 270px; left: 140px; }
+.fm-card[data-pos="CB-R"] { top: 270px; left: 135px; }
 .fm-card[data-pos="RB"]   { top: 270px; left: 260px; }  /* önce 230’du → 240 yaptım */
-
-.fm-card[data-pos="GK"] { top: 365px; left: 140px; }
+.fm-card[data-pos="GK"] { top: 365px; left: 135px; }
 
 /* ============================================
    ALT SEÇİM GÖSTERGE ALANI
@@ -973,3 +907,246 @@ body {
 
 </style>
 </head>
+
+.stats-box {
+    margin-top: 25px;
+    padding: 20px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 12px;
+    backdrop-filter: blur(5px);
+}
+
+.stats-box h3 {
+    color: white;
+    margin-bottom: 15px;
+}
+
+.stat-item {
+    margin-bottom: 10px;
+}
+
+.stat-item label {
+    color: white;
+    font-size: 15px;
+}
+
+.stars {
+    font-size: 22px;
+    letter-spacing: 3px;
+    color: gray;
+}
+
+.stars span.active {
+    color: gold;
+}
+
+.readonly span {
+    pointer-events: none;
+}
+
+.rate-btn {
+    margin-top: 10px;
+    width: 100%;
+    padding: 10px;
+    background: #9333EA;
+    border: none;
+    border-radius: 8px;
+    color: white;
+    font-size: 15px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.rate-btn:hover {
+    background: #a855f7;
+}
+.modal {
+    display: none;
+    position: fixed;
+    left: 0; top: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(4px);
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: rgba(33,33,33,0.9);
+    padding: 25px;
+    width: 350px;
+    border-radius: 15px;
+    color: white;
+}
+
+.rate-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.stars span {
+    cursor: pointer;
+    font-size: 20px;
+    color: gray;
+}
+
+.stars span.active {
+    color: gold;
+}
+
+.save-btn, .close-btn {
+    width: 100%;
+    margin-top: 12px;
+    padding: 10px;
+    border: 0;
+    border-radius: 10px;
+    cursor: pointer;
+}
+
+.save-btn { background: #10B981; color: white; }
+.close-btn { background: #EF4444; color: white; }
+
+
+/* === FUT CARD === */
+
+.fut-card {
+    width: 330px;
+    height: 520px;
+    position: relative;
+}
+
+.fut-bg {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 1;
+}
+
+/* OVERALL + POSITION */
+
+.fut-top {
+    position: absolute;
+    top: 75px;
+    left: 60px;   /* 🔥 daha sağa kaydırıldı */
+    z-index: 10;
+}
+
+
+.fut-ovr {
+    font-size: 45px;
+    font-weight: 860;
+    color: #ffe100;
+    margin-bottom: -6px;
+}
+
+.fut-pos {
+    font-size: 22px;
+    color: #ffe100;
+    font-weight: 700;
+}
+
+
+
+/* PLAYER PHOTO */
+
+
+
+.fut-player {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0.92;
+}
+
+
+
+/* NAME */
+
+.fut-name {
+    position: absolute;
+    top: 290px; /* 🔥 indirildi */
+    width: 100%;
+    text-align: center;
+    color: white;
+    font-size: 28px;
+    font-weight: 900;
+    letter-spacing: 2px;
+    z-index: 9;
+}
+
+
+
+/* STATS */
+
+.fut-stats {
+    position: absolute;
+    bottom: 90px; /* 🔥 yukarı alındı */
+    width: 100%;
+    color: white;
+    z-index: 10;
+    font-size: 17px;
+    font-weight: bold;
+    display: grid;
+    grid-template-columns: 120px 120px;
+	column-gap: 1px !important;   
+	justify-content: center !important;  
+    row-gap: 8px;
+    text-align: center;
+}
+
+
+.fut-stats div {
+    display: flex;
+    justify-content: center;
+    gap: 5px;
+}
+
+.profil-left {
+    background: none !important;
+    background-image: none !important;
+}
+
+.profil-box {
+    background: none !important;
+    background-image: none !important;
+}
+
+
+
+img[src=""],
+img:not([src]) {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    width: 0 !important;
+    height: 0 !important;
+}
+/* FUT kartı yukarı hizalama */
+#profilim .profil-left {
+    margin-top: -30px !important; /* gerekirse -30 / -50 ayarlayabilirsin */
+}
+
+/* Kartın iç boşluğu azalt */
+#profilim .fut-card {
+    margin-top: -20px !important;
+}
+
+.photo-actions{
+	margin-top: -40px !important;
+}
+
+.fm-field {
+    background-image: url("https://i.hizliresim.com/i1g8lc3.jpg"); /* Örnek saha resmi */
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+
+    border-radius: 20px;
+    padding: 20px;
+    box-shadow: 0 0 25px rgba(0,0,0,0.25);
+}

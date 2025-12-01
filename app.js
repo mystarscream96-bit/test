@@ -29,64 +29,75 @@ let CACHE = {
 /* ============================================
    FM24 MEVKİ SEÇİM — 3. MEVKİ ENGELLİ FINAL
 ============================================ */
-const cards = document.querySelectorAll(".fm-card");
-const mainInput = document.getElementById("mainPos");
-const subInput = document.getElementById("subPos");
+let mainPos = null;
+let subPos = null;
+const POS_MAP = {
+    "ST": "Santrafor",
+    "CM-R": "Merkez Orta",
+    "LW": "Sol Kanat",
+    "RW": "Sağ Kanat",
+    "LB": "Sol Bek",
+    "CB-R": "Stoper",
+    "RB": "Sağ Bek",
+    "GK": "Kaleci"
+};
 
-cards.forEach(card => {
-    card.addEventListener("click", () => {
+const POS_MAP_REVERSE = {
+    "Santrafor": "ST",
+    "Merkez Orta": "CM-R",
+    "Sol Kanat": "LW",
+    "Sağ Kanat": "RW",
+    "Sol Bek": "LB",
+    "Stoper": "CB-R",
+    "Sağ Bek": "RB",
+    "Kaleci": "GK"
+};
 
-        const pos = card.dataset.name;
 
-        const isMainSelected = card.classList.contains("selected-main");
-        const isSubSelected  = card.classList.contains("selected-sub");
+document.querySelectorAll(".fm-card").forEach(card => {
+    card.onclick = () => {
 
-        /* =============================
-           1) SEÇİLİ OLAN TEKRAR TIKLANDI
-        ============================== */
-        if (isMainSelected) {
-            mainInput.value = "";
+        const posCode = card.dataset.pos;      // LB, RW, ST
+        const posName = card.dataset.name;     // Sol Bek, Sağ Kanat
+
+        const mainPos = document.getElementById("mainPos").value;
+        const subPos  = document.getElementById("subPos").value;
+
+        // Aynı karta yeniden tıklarsa kaldır
+        if (card.classList.contains("selected-main")) {
+            document.getElementById("mainPos").value = "";
             card.classList.remove("selected-main");
             return;
         }
-
-        if (isSubSelected) {
-            subInput.value = "";
+        if (card.classList.contains("selected-sub")) {
+            document.getElementById("subPos").value = "";
             card.classList.remove("selected-sub");
             return;
         }
 
-        /* =============================
-           2) NORMAL SEÇİM AKIŞI
-        ============================== */
+        // 3. seçim engellemesi
+        if (mainPos && subPos) {
+            notify("3. mevki seçilmesine izin verilmiyor.");
+            return;
+        }
 
-        // Asıl mevki boşsa → Asılı doldur
-        if (mainInput.value === "") {
-            mainInput.value = pos;
-
-            cards.forEach(c => c.classList.remove("selected-main"));
+        // Ana mevki
+        if (!mainPos) {
+            document.getElementById("mainPos").value = posName;  // TÜRKÇE KAYIT
             card.classList.add("selected-main");
             return;
         }
 
-        // Yedek mevki boşsa → Yedeği doldur
-        if (subInput.value === "") {
-            subInput.value = pos;
-
-            cards.forEach(c => c.classList.remove("selected-sub"));
+        // Yedek mevki
+        if (!subPos) {
+            document.getElementById("subPos").value = posName;   // TÜRKÇE KAYIT
             card.classList.add("selected-sub");
             return;
         }
-
-        /* =============================
-           3) ASIL + YEDEK DOLUYSA → SEÇİM İZİN YOK
-        ============================== */
-
-        console.log("3. mevki seçilmesine izin verilmiyor.");
-        return;
-
-    });
+    };
 });
+
+
 
 
 
@@ -253,24 +264,35 @@ function showPage(id) {
 // PROFIL
 // ==========================================================
 async function loadProfil() {
-    if (!currentUser || currentUser === "ADMIN") {
-        document.getElementById("profilPhoto").src = DEFAULT_PHOTO;
-        return;
-    }
+    if (!currentUser || currentUser === "ADMIN") return;
 
     const p = CACHE.players.find(x => x.name === currentUser);
     if (!p) return;
 
-    // Foto
-    document.getElementById("profilPhoto").src = p.photo || DEFAULT_PHOTO;
+    // Karttaki fotoğraf, isim, pozisyon
+  
+    document.getElementById("fifa-name").textContent = p.name;
+    document.getElementById("fifa-position").textContent = p.mainPos || "-";
 
-    // Pozisyon Input'ları
+    // Statlar
+    const stats = p.stats || {
+        sut:0,pas:0,kondisyon:0,hiz:0,fizik:0,defans:0,oyunGorusu:0
+    };
+
+    // Tüm kartı çiz
+    renderFifaCard({ ...p, stats });
+
+    // Mevki inputlarına yaz
     document.getElementById("mainPos").value = p.mainPos || "";
-    document.getElementById("subPos").value  = p.subPos  || "";
-
-    // Kartları işaretle
-    highlightSavedPositions(p.mainPos, p.subPos);
+    document.getElementById("subPos").value = p.subPos || "";
+	
+highlightSavedPositions(p.mainPos, p.subPos);
 }
+
+
+
+
+
 
 
 function markSelectedCards() {
@@ -288,22 +310,26 @@ function markSelectedCards() {
     });
 }
 
-function highlightSavedPositions(mainP, subP) {
-    cards.forEach(card => {
-        card.classList.remove("selected-main");
-        card.classList.remove("selected-sub");
+function highlightSavedPositions(mainPos, subPos) {
 
-        let name = card.dataset.name;
-
-        if (name === mainP) {
-            card.classList.add("selected-main");
-        }
-
-        if (name === subP) {
-            card.classList.add("selected-sub");
-        }
+    document.querySelectorAll(".fm-card").forEach(c => {
+        c.classList.remove("selected-main", "selected-sub");
     });
+
+    if (mainPos) {
+        const code = POS_MAP_REVERSE[mainPos];  
+        const el = document.querySelector(`.fm-card[data-pos="${code}"]`);
+        if (el) el.classList.add("selected-main");
+    }
+
+    if (subPos) {
+        const code = POS_MAP_REVERSE[subPos];
+        const el = document.querySelector(`.fm-card[data-pos="${code}"]`);
+        if (el) el.classList.add("selected-sub");
+    }
 }
+
+
 
 
 // ==========================================================
@@ -439,7 +465,6 @@ async function loadAll() {
     await loadPlayers();
     await loadGecmis();
     await loadGolKr();
-    await loadAsistKr();
     await loadKazananlar();
     await loadEnIyi();
     await setupSelects();
@@ -464,10 +489,19 @@ async function loadPlayers() {
                     <p><strong>Asıl Mevki:</strong> ${p.mainPos || '-'}</p>
                     <p><strong>Yedek Mevki:</strong> ${p.subPos || '-'}</p>
                 </div>
+
+                ${
+                    currentUser === "ADMIN"
+                        ? `<button class="rate-btn" onclick="openRatePanel('${p.id}', '${p.name}')">Puanla</button>`
+                        : ``
+                }
             </div>
         `;
     });
 }
+
+
+
 
 
 // ==========================================================
@@ -562,7 +596,6 @@ async function deletePlayer() {
 async function ekleGolAsist() {
     let name = selects["gaPlayer"].value;
     let gol = Number(document.getElementById("gaGol").value);
-    let asist = Number(document.getElementById("gaAsist").value);
 
     if (!name) return alert("Oyuncu seç!");
 
@@ -571,12 +604,10 @@ async function ekleGolAsist() {
     await db.collection("ga").add({
         name,
         gol,
-        asist,
         photo: p?.photo || DEFAULT_PHOTO
     });
 
     document.getElementById("gaGol").value = "";
-    document.getElementById("gaAsist").value = "";
 
     await loadAll();
     notify("Kaydedildi");
@@ -621,41 +652,6 @@ async function loadGolKr() {
 }
 
 
-// ==========================================================
-// ASİST KRALLIĞI
-// ==========================================================
-async function loadAsistKr() {
-    const box = document.getElementById("asistList");
-    box.innerHTML = "";
-
-    let map = {};
-
-    CACHE.ga.forEach(d => {
-        if (!map[d.name]) map[d.name] = { asist: 0, photo: d.photo };
-        map[d.name].asist += d.asist;
-    });
-
-    let arr = Object.entries(map).map(([name, data]) => ({
-        name,
-        photo: data.photo,
-        asist: data.asist
-    }));
-
-    arr.sort((a, b) => b.asist - a.asist);
-
-    arr.forEach(d => {
-        if (d.asist <= 0) return;
-        box.innerHTML += `
-            <div class="kr-item">
-                <div class="kr-left">
-                    <img class="kr-photo" src="${d.photo}">
-                    <div class="kr-name">${d.name}</div>
-                </div>
-                <div class="kr-score">${d.asist}</div>
-            </div>
-        `;
-    });
-}
 
 // ==========================================================
 // EN İYİ OYUNCULAR — MEGA OPTIMIZED
@@ -677,7 +673,7 @@ async function loadEnIyi() {
         // GOL + ASİST TOPLAMI
         let userGA = CACHE.ga.filter(g => g.name === name);
         let totalGol = userGA.reduce((t, g) => t + Number(g.gol), 0);
-        let totalAsist = userGA.reduce((t, g) => t + Number(g.asist), 0);
+
 
         // KAZANAN SAYISI
         let winCount = CACHE.winners.filter(w => w.players.includes(name)).length;
@@ -686,7 +682,6 @@ async function loadEnIyi() {
         let finalScore =
             totalPoints +
             (totalGol * 2) +
-            totalAsist +
             (winCount * 5);
 
         arr.push({
@@ -800,44 +795,53 @@ function logout() {
 async function updatePhoto() {
     const fileInput = document.getElementById("profilUpload");
     const file = fileInput.files[0];
-    if (!file) return;
 
-    const btn = event.target;
+    if (!file) {
+        notify("Lütfen bir dosya seç!");
+        return;
+    }
+
+    const btn = document.querySelector('button[onclick="updatePhoto()"]');
     btn.classList.add("loading");
 
     try {
-        const { fileUrl } = await upload.uploadFile(file); // Upload.io
+        const { fileUrl } = await upload.uploadFile(file);
 
-        // Firestore’a kaydet
         let p = CACHE.players.find(x => x.name === currentUser);
         if (p) {
             await db.collection("players").doc(p.id).update({
                 photo: fileUrl
             });
-        }
 
-        // Ön izleme
-        document.getElementById("profilPhoto").src = fileUrl;
+            // Karttaki fotoğrafı anında güncelle
+            document.getElementById("fifa-photo").src = fileUrl;
+
+            renderFifaCard({
+                ...p,
+                photo: fileUrl
+            });
+        }
 
         notify("Fotoğraf Güncellendi");
     } catch (e) {
-        alert("Fotoğraf yüklenemedi!");
+        notify("Fotoğraf Güncellendi");
     }
 
     btn.classList.remove("loading");
 }
+document.getElementById("selectFileBtn").onclick = () => {
+    document.getElementById("profilUpload").click();
+};
+
+
 
 
 async function savePositions() {
-    if (!currentUser) return alert("Kullanıcı bulunamadı!");
 
     const mainP = document.getElementById("mainPos").value;
     const subP  = document.getElementById("subPos").value;
 
-    if (!mainP) return alert("Asıl mevki seçmelisin!");
-
     let p = CACHE.players.find(x => x.name === currentUser);
-    if (!p) return;
 
     await db.collection("players").doc(p.id).update({
         mainPos: mainP,
@@ -845,6 +849,125 @@ async function savePositions() {
     });
 
     notify("Mevkiler Kaydedildi");
+
+    // PROFİL KARTINI YENİLE
+    await refreshCache();
+    const updated = CACHE.players.find(x => x.name === currentUser);
+    if (updated) renderFifaCard(updated);
+}
+
+
+function renderStars(elId, value) {
+    const el = document.getElementById(elId);
+    el.innerHTML = "";
+
+    for (let i = 1; i <= 5; i++) {
+        const span = document.createElement("span");
+        span.textContent = "★";
+        if (i <= value) span.classList.add("active");
+        el.appendChild(span);
+    }
+}
+
+
+// Firebase'den stat çekildikten sonra:
+function loadPlayerStats(stats) {
+    renderStars("stat-sut", stats.sut);
+    renderStars("stat-pas", stats.pas);
+    renderStars("stat-kondisyon", stats.kondisyon);
+    renderStars("stat-hiz", stats.hiz);
+    renderStars("stat-fizik", stats.fizik);
+    renderStars("stat-defans", stats.defans);
+    renderStars("stat-oyunGorusu", stats.oyunGorusu);
+}
+
+function openRatePanel(id, name) {
+    selectedPlayerId = id;
+
+    document.getElementById("ratePlayerName").textContent = name;
+    document.getElementById("rateModal").style.display = "flex";
+
+    // Eski değerleri doldur
+    const p = CACHE.players.find(x => x.id === id);
+    const s = p.stats || {};
+
+    document.getElementById("rate-sut").value = s.sut ?? 0;
+    document.getElementById("rate-pas").value = s.pas ?? 0;
+    document.getElementById("rate-kond").value = s.kondisyon ?? 0;
+    document.getElementById("rate-hiz").value = s.hiz ?? 0;
+    document.getElementById("rate-fizik").value = s.fizik ?? 0;
+    document.getElementById("rate-def").value = s.defans ?? 0;
+    document.getElementById("rate-oyunGorusu").value = s.oyunGorusu ?? 0;
+}
+
+
+function closeRatePanel() {
+    document.getElementById("rateModal").style.display = "none";
+}
+
+document.getElementById("saveRating").onclick = async () => {
+
+    const newStats = {
+        sut: Number(document.getElementById("rate-sut").value),
+        pas: Number(document.getElementById("rate-pas").value),
+        kondisyon: Number(document.getElementById("rate-kond").value),
+        hiz: Number(document.getElementById("rate-hiz").value),
+        fizik: Number(document.getElementById("rate-fizik").value),
+        defans: Number(document.getElementById("rate-def").value),
+        oyunGorusu: Number(document.getElementById("rate-oyunGorusu").value)
+    };
+
+    await db.collection("players")
+        .doc(selectedPlayerId)
+        .update({ stats: newStats });
+
+    await refreshCache();
+
+    closeRatePanel();
+    notify("Puanlar Kaydedildi");
+
+    // Eğer profil kendi profili ise kartı güncelle
+    const p = CACHE.players.find(x => x.id === selectedPlayerId);
+    if (p.name === currentUser) {
+        renderFifaCard({ ...p, stats: newStats });
+    }
+};
+
+
+
+
+
+
+function renderFifaCard(p) {
+
+    const stats = p.stats ? p.stats : {
+        sut: 0,
+        pas: 0,
+        kondisyon: 0,
+        hiz: 0,
+        fizik: 0,
+        defans: 0,
+        oyunGorusu: 0
+    };
+
+   
+    document.getElementById("fifa-name").textContent = p.name?.toUpperCase() ?? "-";
+    document.getElementById("fifa-position").textContent = p.mainPos || "-";
+
+    document.getElementById("fifa-sut").textContent = stats.sut ?? 0;
+    document.getElementById("fifa-pas").textContent = stats.pas ?? 0;
+    document.getElementById("fifa-kondisyon").textContent = stats.kondisyon ?? 0;
+    document.getElementById("fifa-hiz").textContent = stats.hiz ?? 0;
+    document.getElementById("fifa-fizik").textContent = stats.fizik ?? 0;
+    document.getElementById("fifa-defans").textContent = stats.defans ?? 0;
+
+    // OVR hesapla
+    const ovr = Math.round(
+        (stats.sut + stats.pas + stats.kondisyon +
+         stats.hiz + stats.fizik + stats.defans) / 6
+    );
+
+    document.getElementById("fifa-overall").textContent = ovr;
 }
 
 

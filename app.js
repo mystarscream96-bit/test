@@ -9,7 +9,8 @@ const upload = Upload({
 const DEFAULT_PHOTO = "https://i.hizliresim.com/hw8yfje.png";
 let currentUser = null;
 const db = firebase.firestore();
-
+const FORMA_A = "https://i.hizliresim.com/1qy6nk5.png";
+const FORMA_B = "https://i.hizliresim.com/82yu2gw.png"; 
 let selects = {};
 let multiSelects = {};
 
@@ -43,14 +44,14 @@ const POS_MAP = {
 };
 
 const POS_MAP_REVERSE = {
-    "Santrafor": "ST",
-    "Merkez Orta": "CM-R",
-    "Sol Kanat": "LW",
-    "Sağ Kanat": "RW",
+    "Kaleci": "GK",
     "Sol Bek": "LB",
     "Stoper": "CB-R",
     "Sağ Bek": "RB",
-    "Kaleci": "GK"
+    "Sol Kanat": "LW",
+    "Sağ Kanat": "RW",
+    "Merkez Orta": "CM-R",
+    "Santrafor": "ST"
 };
 
 
@@ -175,61 +176,7 @@ function buildSingleSelect(wrapper, items) {
     };
 }
 
-function buildMultiSelect(wrapper, items) {
-    const chipArea = wrapper.querySelector(".multi-selected");
-    const options = wrapper.querySelector(".custom-options");
 
-    options.innerHTML = "";
-    chipArea.innerHTML = "";
-
-    let selected = [];
-
-    items.forEach(name => {
-        let div = document.createElement("div");
-        div.className = "custom-option";
-        div.innerText = name;
-
-        div.onclick = () => {
-            if (selected.includes(name)) {
-                selected = selected.filter(x => x !== name);
-                div.classList.remove("selected");
-            } else {
-                selected.push(name);
-                div.classList.add("selected");
-            }
-            refreshChips();
-        };
-
-        options.appendChild(div);
-    });
-
-    chipArea.onclick = () => {
-        options.style.display = options.style.display === "block" ? "none" : "block";
-    };
-
-    function refreshChips() {
-        chipArea.innerHTML = "";
-        selected.forEach(name => {
-            let chip = document.createElement("div");
-            chip.className = "chip";
-            chip.innerHTML = `${name} <span class="chip-remove">×</span>`;
-            chip.querySelector(".chip-remove").onclick = () => {
-                selected = selected.filter(x => x !== name);
-                refreshChips();
-                [...options.children].forEach(o => {
-                    if (o.innerText === name) o.classList.remove("selected");
-                });
-            };
-            chipArea.appendChild(chip);
-        });
-    }
-
-    return {
-        get values() {
-            return selected;
-        }
-    };
-}
 
 // ==========================================================
 // PAGE SYSTEM
@@ -248,16 +195,25 @@ function showPage(id) {
         alert("Admin için profil bölümü kapalı.");
         return;
     }
-
-    // 🔥 PROFİLE GEÇİNCE PROFİLİ YÜKLE
+console.log("AÇILAN SAYFA:", id);
     if (id === "profilim") {
         loadProfil();
     }
+
+    // ⭐ KADRO SAYFASI AÇILDIĞINDA
+    if (id === "kadro") {
+        loadKadroPlayerGrid();
+      
+    }
+if (id === "haftaninKadro") {
+    loadHaftaninKadro();
+}
 
     if (id !== "login") {
         localStorage.setItem("hsPage", id);
     }
 }
+
 
 
 // ==========================================================
@@ -388,7 +344,8 @@ async function openApp() {
 
     document.getElementById("profilBtn").style.display =
         currentUser === "ADMIN" ? "none" : "inline-block";
-
+document.getElementById("kadroBtn").style.display =
+    currentUser === "ADMIN" ? "inline-block" : "none";
     await loadAll();
 
     let savedPage = localStorage.getItem("hsPage") || "oyuncular";
@@ -421,10 +378,7 @@ async function setupSelects() {
         list
     );
 
-    multiSelects["winnerSelect"] = buildMultiSelect(
-        document.querySelector('[data-id="winnerSelect"]'),
-        list
-    );
+   
 }
 
 // ==========================================================
@@ -934,10 +888,6 @@ document.getElementById("saveRating").onclick = async () => {
 };
 
 
-
-
-
-
 function renderFifaCard(p) {
 
     const stats = p.stats ? p.stats : {
@@ -969,6 +919,398 @@ function renderFifaCard(p) {
 
     document.getElementById("fifa-overall").textContent = ovr;
 }
+
+
+async function loadPlayersIntoKadroUI() {
+    const snap = await db.collection("players").get();
+
+    const players = [];
+    snap.forEach(doc => {
+        players.push({ id: doc.id, ...doc.data() });
+    });
+
+    // Custom Multi (16 oyuncu)
+    const multiContainer = document.querySelector('#kadroPlayersSelect .custom-options');
+    multiContainer.innerHTML = "";
+    players.forEach(p => {
+        multiContainer.innerHTML += `
+            <div class="option" data-value="${p.id}">${p.name}</div>
+        `;
+    });
+
+    // A takımı kaleci
+    const gkA = document.querySelector('#gkASelect .custom-options');
+    const gkB = document.querySelector('#gkBSelect .custom-options');
+
+    gkA.innerHTML = "";
+    gkB.innerHTML = "";
+
+    players.forEach(p => {
+        gkA.innerHTML += `<div class="option" data-value="${p.id}">${p.name}</div>`;
+        gkB.innerHTML += `<div class="option" data-value="${p.id}">${p.name}</div>`;
+    });
+
+    // Custom select JS’ini yeniden tetiklemek için:
+    initCustomSelects();
+}
+
+let selectedPlayers = [];
+
+/* 16 oyuncu gridini yükle */
+async function loadKadroPlayerGrid() {
+    const snap = await db.collection("players").get();
+
+    const grid = document.getElementById("kadroPlayerGrid");
+    grid.innerHTML = "";
+    selectedPlayers = [];
+
+    snap.forEach(doc => {
+        const p = doc.data();
+        const id = doc.id;
+
+        const div = document.createElement("div");
+        div.className = "player-item";
+        div.innerText = p.name;
+        div.dataset.id = id;
+
+        div.addEventListener("click", () => {
+            if (div.classList.contains("selected")) {
+                div.classList.remove("selected");
+                selectedPlayers = selectedPlayers.filter(x => x !== id);
+            } else {
+                if (selectedPlayers.length >= 16) {
+                    alert("En fazla 16 oyuncu seçebilirsin!");
+                    return;
+                }
+                div.classList.add("selected");
+                selectedPlayers.push(id);
+            }
+            updateGKDropdowns();
+        });
+
+        grid.appendChild(div);
+    });
+}
+
+/* Kaleci dropdownlarını güncelle */
+function updateGKDropdowns() {
+    const gkA = document.querySelector("#gkASelect .custom-options");
+    const gkB = document.querySelector("#gkBSelect .custom-options");
+
+    gkA.innerHTML = "";
+    gkB.innerHTML = "";
+
+    selectedPlayers.forEach(id => {
+        const p = CACHE.players.find(x => x.id === id);
+        if (!p) return;
+
+        gkA.innerHTML += `<div class="option" data-id="${id}">${p.name}</div>`;
+        gkB.innerHTML += `<div class="option" data-id="${id}">${p.name}</div>`;
+    });
+
+    initCustomSelects();
+}
+
+/* Custom Select Setup */
+function initCustomSelects() {
+    document.querySelectorAll(".custom-select").forEach(sel => {
+        const display = sel.querySelector(".custom-display");
+        const options = sel.querySelector(".custom-options");
+
+        display.onclick = () => {
+            let isOpen = options.style.display === "block";
+            document.querySelectorAll(".custom-options").forEach(o => o.style.display = "none");
+            options.style.display = isOpen ? "none" : "block";
+        };
+
+        options.querySelectorAll(".option").forEach(opt => {
+            opt.onclick = () => {
+                display.innerText = opt.innerText;
+                sel.dataset.value = opt.dataset.id;
+                options.style.display = "none";
+            };
+        });
+    });
+}
+function normalizePos(pos) {
+    if (!pos) return null;
+    if (pos === "CB-R") return "CB";
+    if (pos === "CM-R") return "CM";
+    return pos;
+}
+
+function buildBalancedTeams(selectedPlayers, gkA, gkB) {
+
+    const outfield = selectedPlayers.filter(id => id !== gkA && id !== gkB);
+
+    // 🔥 normalize edilmiş pozisyon listesi
+    const posList = ["ST", "RW", "LW", "CM", "LB", "RB", "CB"];
+
+    let A = [gkA];
+    let B = [gkB];
+
+    let posMap = {
+        GK: gkA,
+        GK2: gkB
+    };
+
+    let used = new Set([gkA, gkB]);
+
+    const avg = stats => {
+        if (!stats) return 0;
+        return (
+            (stats.sut || 0) +
+            (stats.pas || 0) +
+            (stats.kondisyon || 0) +
+            (stats.hiz || 0) +
+            (stats.fizik || 0) +
+            (stats.defans || 0)
+        ) / 6;
+    };
+
+    let flip = false;
+
+    posList.forEach(pos => {
+
+        let pool = outfield
+            .map(id => CACHE.players.find(p => p.id === id))
+            .filter(p => p && !used.has(p.id))
+            .filter(p => {
+                const main = normalizePos(POS_MAP_REVERSE[p.mainPos]);
+                const sub  = normalizePos(POS_MAP_REVERSE[p.subPos]);
+                return main === pos || sub === pos;
+            })
+            .sort((a,b) => avg(b.stats) - avg(a.stats));
+
+        // fallback
+        if (pool.length < 2) {
+            let leftovers = outfield
+                .map(id => CACHE.players.find(p => p.id === id))
+                .filter(p => p && !used.has(p.id))
+                .sort((a,b) => avg(b.stats) - avg(a.stats));
+
+            while (pool.length < 2 && leftovers.length > 0) {
+                pool.push(leftovers.shift());
+            }
+        }
+
+        while (pool.length < 2) pool.push(null);
+
+        let best1 = pool[0];
+        let best2 = pool[1];
+
+        let Aplayer = flip ? best2 : best1;
+        let Bplayer = flip ? best1 : best2;
+
+        // A
+        if (Aplayer && !used.has(Aplayer.id)) {
+            A.push(Aplayer.id);
+            used.add(Aplayer.id);
+            posMap[pos === "CM" ? "CM-R" : pos === "CB" ? "CB-R" : pos] = Aplayer.id;
+        } else {
+            posMap[pos] = null;
+        }
+
+        // B
+        if (Bplayer && !used.has(Bplayer.id)) {
+            B.push(Bplayer.id);
+            used.add(Bplayer.id);
+            posMap[(pos === "CM" ? "CM-R" : pos === "CB" ? "CB-R" : pos) + "2"] = Bplayer.id;
+        } else {
+            posMap[pos + "2"] = null;
+        }
+
+        flip = !flip;
+    });
+
+    return { teamA: A, teamB: B, posMap };
+}
+
+
+
+function getPositionCandidates(ids, pos) {
+    return ids
+        .map(id => CACHE.players.find(x => x.id === id))
+        .filter(p => p)
+        .map(p => {
+            let main = POS_MAP_REVERSE[p.mainPos];
+            let sub  = POS_MAP_REVERSE[p.subPos];
+
+            let match = (main === pos || sub === pos);
+
+            const score = (
+                (p.stats?.sut || 0) +
+                (p.stats?.pas || 0) +
+                (p.stats?.kondisyon || 0) +
+                (p.stats?.hiz || 0) +
+                (p.stats?.fizik || 0) +
+                (p.stats?.defans || 0)
+            ) / 6;
+
+            return { ...p, match, score };
+        })
+        .filter(p => p.match)
+        .sort((a,b) => b.score - a.score);
+}
+function avgScore(s) {
+    if (!s) return 0;
+    return (
+        (s.sut||0) + (s.pas||0) + (s.kondisyon||0) +
+        (s.hiz||0) + (s.fizik||0) + (s.defans||0)
+    ) / 6;
+}
+
+
+function fillMissing(pool, outfield, used) {
+    if (pool.length >= 2) return pool;
+
+    const remaining = outfield
+        .map(id => CACHE.players.find(x => x.id === id))
+        .filter(p => p && !used.has(p.id))
+        .sort((a,b) => {
+            const sa = avgScore(a.stats);
+            const sb = avgScore(b.stats);
+            return sb - sa;
+        });
+
+    while (pool.length < 2 && remaining.length > 0) {
+        pool.push(remaining.shift());
+    }
+    return pool;
+}
+
+
+
+
+
+document.getElementById("buildBtn").onclick = async () => {
+
+    if (selectedPlayers.length !== 16)
+        return alert("16 oyuncu seçmelisin!");
+
+    const gkA = document.querySelector("#gkASelect").dataset.value;
+    const gkB = document.querySelector("#gkBSelect").dataset.value;
+
+    if (!gkA || !gkB)
+        return alert("Kalecileri seç!");
+
+    const result = buildBalancedTeams(selectedPlayers, gkA, gkB);
+
+    await db.collection("haftaninKadro").doc("latest").set({
+        teamA: result.teamA,
+        teamB: result.teamB,
+        posMap: result.posMap,
+        createdAt: new Date().toISOString()
+    });
+
+    alert("Kadro oluşturuldu!");
+};
+
+
+
+function posTranslate(code) {
+    return {
+        "GK": "Kaleci",
+        "LB": "Sol Bek",
+        "CB-R": "Stoper",
+        "RB": "Sağ Bek",
+        "LW": "Sol Kanat",
+        "RW": "Sağ Kanat",
+        "CM-R": "Merkez Orta",
+        "ST": "Santrafor"
+    }[code] || "-";
+}
+
+
+async function loadHaftaninKadro() {
+    const snap = await db.collection("haftaninKadro").doc("latest").get();
+    if (!snap.exists) return;
+
+    const data = snap.data();
+    const posMap = data.posMap || {};
+
+    const teamABox = document.getElementById("haftaTeamA");
+    const teamBBox = document.getElementById("haftaTeamB");
+
+    teamABox.innerHTML = "";
+    teamBBox.innerHTML = "";
+
+    const posList = ["GK","ST","RW","LW","CM-R","LB","RB","CB-R"];
+
+    // OVR Hesaplayıcı
+    const getOVR = (p) => {
+        if (!p || !p.stats) return 0;
+        const s = p.stats;
+        return Math.round(
+            ((s.sut||0)+(s.pas||0)+(s.kondisyon||0)+(s.hiz||0)+(s.fizik||0)+(s.defans||0)) / 6
+        );
+    };
+
+    // Renk sınıfı seçimi
+    const getOvrClass = (ovr) => {
+        if (ovr >= 85) return "ovr-gold";
+        if (ovr >= 75) return "ovr-silver";
+        return "ovr-bronze";
+    };
+
+    posList.forEach(pos => {
+        const key = pos === "CM" ? "CM-R" : pos;
+
+        const A_id = posMap[key] || null;
+        const B_id = posMap[key + "2"] || null;
+
+        const A_player = CACHE.players.find(p => p.id === A_id);
+        const B_player = CACHE.players.find(p => p.id === B_id);
+
+        const posName = posTranslate(key);
+
+        const ovrA = getOVR(A_player);
+        const ovrB = getOVR(B_player);
+
+        const classA = getOvrClass(ovrA);
+        const classB = getOvrClass(ovrB);
+
+        // A TAKIMI
+        teamABox.innerHTML += `
+            <div class="hkPlayer">
+                <img class="hkFormImg" src="${FORMA_A}">
+                <div class="playerOVR ${classA}">${A_player ? ovrA : "-"}</div>
+
+                <span>${A_player ? A_player.name : "-"}</span>
+                <span class="playerPos">${A_player ? posName : "-"}</span>
+            </div>
+        `;
+
+        // B TAKIMI
+        teamBBox.innerHTML += `
+            <div class="hkPlayer">
+                <img class="hkFormImg" src="${FORMA_B}">
+                <div class="playerOVR ${classB}">${B_player ? ovrB : "-"}</div>
+
+                <span>${B_player ? B_player.name : "-"}</span>
+                <span class="playerPos">${B_player ? posName : "-"}</span>
+            </div>
+        `;
+    });
+
+    console.log("POS MAP:", posMap);
+    console.log("TEAM A:", data.teamA);
+    console.log("TEAM B:", data.teamB);
+}
+
+
+
+	
+
+
+
+
+
+
+
+
+
+
 
 
 

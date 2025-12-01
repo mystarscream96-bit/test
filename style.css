@@ -1150,3 +1150,405 @@ img:not([src]) {
     padding: 20px;
     box-shadow: 0 0 25px rgba(0,0,0,0.25);
 }
+/* === Kadro Sayfası – Full Site UI Uyumlu === */
+
+#kadro .kadroWidget {
+    background: rgba(255, 255, 255, 0.12);
+    padding: 25px;
+    border-radius: 20px;
+    max-width: 900px;
+    margin: auto;
+    margin-top: 25px;
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,0.15);
+    box-shadow: 0 5px 25px rgba(0,0,0,0.25);
+}
+
+#kadro h2 {
+    color: #fff;
+    margin-bottom: 18px;
+    font-size: 26px;
+    font-weight: 600;
+}
+
+#kadro .kadroWidget label {
+    font-weight: 500;
+    color: #eaeaea;
+    margin-bottom: 5px;
+    display: block;
+}
+
+#kadro select {
+    width: 100%;
+    padding: 10px;
+    background: rgba(255,255,255,0.2);
+    border: 1px solid rgba(255,255,255,0.25);
+    border-radius: 10px;
+    color: #fff;
+    font-size: 15px;
+}
+
+#kadro select option {
+    color: #000;
+}
+
+#kadro .gkRow {
+    display: flex;
+    gap: 20px;
+    margin-top: 10px;
+}
+
+#kadro .gkRow div {
+    flex: 1;
+}
+
+#buildBtn {
+    background: linear-gradient(45deg, #2b7cff, #1f59ff);
+    width: 100%;
+    padding: 14px;
+    border-radius: 12px;
+    border: none;
+    margin-top: 18px;
+    font-weight: 700;
+    font-size: 16px;
+    color: white;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: 0.25s;
+}
+
+#buildBtn:hover {
+    filter: brightness(1.2);
+}
+
+.teamsRow {
+    display: flex;
+    gap: 25px;
+    margin-top: 25px;
+}
+
+.teamBox {
+    flex: 1;
+    background: rgba(255,255,255,0.15);
+    padding: 15px;
+    border-radius: 16px;
+    box-shadow: inset 0 0 10px rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.15);
+    color: #fff;
+}
+
+.teamBox h3 {
+    margin-top: 0;
+    margin-bottom: 12px;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.teamBox ul {
+    padding: 0;
+    list-style: none;
+    margin: 0;
+}
+
+.teamBox ul li {
+    background: rgba(255,255,255,0.18);
+    padding: 8px 10px;
+    border-radius: 10px;
+    margin-bottom: 8px;
+    border: 1px solid rgba(255,255,255,0.25);
+}
+
+.teamBox .total {
+    margin-top: 12px;
+    font-weight: bold;
+}
+#kadro select {
+    width: 100%;
+    padding: 10px 12px;
+    font-size: 15px;
+    color: #fff;
+    background: rgba(255,255,255,0.18);
+    border: 1px solid rgba(255,255,255,0.25);
+    border-radius: 12px;
+    outline: none;
+    appearance: none;
+}
+
+#kadro select:focus {
+    border: 1px solid #3a8bff;
+    box-shadow: 0 0 8px rgba(58,139,255,0.7);
+}
+
+.player-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-top: 10px;
+}
+
+.player-item {
+    padding: 10px 12px;
+    background: rgba(255,255,255,0.12);
+    border-radius: 8px;
+    cursor: pointer;
+    text-align: center;
+    font-weight: 600;
+    border: 2px solid transparent;
+    transition: 0.25s;
+    user-select: none;
+}
+
+.player-item:hover {
+    background: rgba(255,255,255,0.2);
+}
+
+.player-item.selected {
+    border: 2px solid #48ff00;
+    background: rgba(0,255,0,0.15);
+    color: #fff;
+}
+
+.gkRow {
+    display: flex;
+    gap: 20px;
+    margin-top: 15px;
+}
+
+
+#gkA, #gkB {
+    width: 100%;
+    padding: 12px;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.3);
+    color: #fff;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+#gkA option, #gkB option {
+    color: #000;
+}
+/* Haftanın Kadrosu FM Dizilişi */
+.hafta-wrapper {
+    margin-top: 25px;
+}
+
+/* 8 kişilik halı saha dizilimi */
+.hkField {
+    position: relative;
+    width: 900px;
+    height: 520px;
+    margin: auto;
+    margin-top: 20px;
+}
+
+.hkFieldImg {
+    width: 100%;
+    height: 100%;
+    border-radius: 20px;
+    object-fit: cover;
+}
+.hkPlayer {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 12px 0;
+}
+
+.hkFormImg {
+    width: 45px;
+    height: 45px;
+    object-fit: contain;
+    display: block;
+}
+
+/* Tüm satırları eşit hizalar */
+#haftaTeamA .hkPlayer,
+#haftaTeamB .hkPlayer {
+    min-height: 50px;         /* Aynı yükseklik */
+    padding-left: 10px;
+}
+
+#haftaTeamA span,
+#haftaTeamB span {
+    display: inline-block;
+    min-width: 120px;        /* Her isim aynı hizada */
+}
+.fieldPlayer {
+    position: relative;
+    text-align: center;
+    transform: translate(-50%, -50%);
+}
+
+.fieldForma {
+    width: 60px;
+    height: auto;
+    display: block;
+    margin: 0 auto;
+}
+
+.fieldName {
+    font-size: 14px;
+    color: white;
+    font-weight: 700;
+    display: block;
+    text-shadow: 0 0 5px black;
+}
+
+.fieldPos {
+    font-size: 12px;
+    color: #ffd600;
+    font-weight: 700;
+    display: block;
+}
+
+
+
+
+.slot {
+    position: absolute;
+    width: 100px;
+    text-align: center;
+    transform: translate(-50%, -50%);
+}
+
+.fieldPlayer img {
+    width: 65px;
+}
+
+.fieldPlayer .name {
+    margin-top: 5px;
+    font-weight: bold;
+    color: white;
+    text-shadow: 0 0 4px black;
+}
+
+
+
+/* Pozisyonların konumu */
+.pos {
+    position: absolute;
+    text-align: center;
+    color: white;
+    font-weight: 700;
+}
+
+.fieldPlayer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.fieldForma {
+    width: 55px;
+}
+
+.fieldName {
+    font-size: 14px;
+    margin-top: 4px;
+}
+
+.fieldPos {
+    font-size: 11px;
+    opacity: 0.8;
+}
+
+
+
+
+
+#field {
+    position: relative;
+}
+
+.player {
+    position: absolute;
+    width: 80px;
+    text-align: center;
+}
+
+.fieldForma {
+    width: 55px;
+}
+
+.fieldName {
+    font-size: 14px;
+    font-weight: bold;
+    color: white;
+}
+.hkPlayer {
+    display: flex;
+    align-items: center;
+    gap: 0px;
+
+    padding: 4px 0;
+    width: 90%;
+    overflow: hidden;   /* taşmayı tamamen kes */
+}
+
+.hkPlayer span {
+    white-space: nowrap;
+}
+
+.playerOVR {
+    width: 70px;
+    height: 34px;
+    border-radius: 6px;
+    background: #555;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    font-size: 14px;
+    font-weight: 900;
+
+    color: #fff;
+    margin-right: 10px;
+
+    border: 2px solid rgba(255,255,255,0.4);
+    box-shadow: 0 0 6px rgba(0,0,0,0.4);
+
+    position: relative;
+    overflow: hidden;
+}
+
+/* FUT ışık efekti */
+.playerOVR::before {
+    content: "";
+    position: absolute;
+    top: -40%;
+    left: -40%;
+    width: 150%;
+    height: 150%;
+    background: linear-gradient(
+        135deg,
+        rgba(255,255,255,0.35) 0%,
+        rgba(255,255,255,0.05) 60%,
+        rgba(255,255,255,0.0) 100%
+    );
+    transform: rotate(25deg);
+}
+
+/* GOLD */
+.ovr-gold {
+    background: linear-gradient(135deg, #ffdf84 0%, #d5a743 100%);
+    border-color: #fff6c7;
+    color: #3a2b00;
+}
+
+/* SILVER */
+.ovr-silver {
+    background: linear-gradient(135deg, #e9e9e9 0%, #b9b9b9 100%);
+    border-color: #f8f8f8;
+    color: #2f2f2f;
+}
+
+/* BRONZE */
+.ovr-bronze {
+    background: linear-gradient(135deg, #c58a48 0%, #8d5a22 100%);
+    border-color: #ffe2c2;
+}
+
+

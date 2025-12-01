@@ -58,13 +58,12 @@
     <button class="nav-btn" onclick="showPage('puan')">Puan Ver</button>
     <button class="nav-btn" onclick="showPage('gecmis')">Puan Geçmişi</button>
     <button class="nav-btn" onclick="showPage('golKr')">Gol Krallığı</button>
-    <button class="nav-btn" onclick="showPage('asistKr')">Asist Krallığı</button>
     <button class="nav-btn" onclick="showPage('kazananlar')">Kazananlar</button>
     <button class="nav-btn" onclick="showPage('eniyi')">En İyi Oyuncular</button>
 
     <!-- Admin’e özel -->
     <button id="adminBtn" class="nav-btn admin-only" style="display:none;" onclick="showPage('admin')">Admin Paneli</button>
-    <button id="gaBtn" class="nav-btn admin-only" style="display:none;" onclick="showPage('gaYonetim')">Gol / Asist Yönetimi</button>
+    <button id="gaBtn" class="nav-btn admin-only" style="display:none;" onclick="showPage('gaYonetim')">Gol Yönetimi</button>
     <button id="winBtn" class="nav-btn admin-only" style="display:none;" onclick="showPage('winYonetim')">Kazanan Yönetimi</button>
 
     <!-- Çıkış -->
@@ -77,62 +76,87 @@
 
     <div class="profil-box">
 
-        <!-- SOL TARAF -->
+        <!-- --- SOL TARAF (FUT KART + FOTO GÜNCELLEME) --- -->
         <div class="profil-left">
-            <img id="profilPhoto" class="profil-photo" src="">
-            <input id="profilUpload" type="file" accept="image/*">
-            <button class="btn" onclick="updatePhoto()">Fotoğrafı Güncelle</button>
-        </div>
 
-        <!-- SAĞ TARAF -->
+    <div class="fut-card">
+
+    <img class="fut-bg" src="https://i.hizliresim.com/j07s1f1.png">
+
+    <div class="fut-top">
+        <div class="fut-ovr" id="fifa-overall">0</div>
+        <div class="fut-pos" id="fifa-position">-</div>
+    </div>
+
+  
+
+    <div class="fut-name" id="fifa-name">OYUNCU</div>
+
+    <div class="fut-stats">
+        <div><b id="fifa-hiz"></b> HIZ</div>
+        <div><b id="fifa-sut"></b> ŞUT</div>
+        <div><b id="fifa-pas"></b> PAS</div>
+        <div><b id="fifa-kondisyon"></b> KON</div>
+        <div><b id="fifa-defans"></b> DEF</div>
+        <div><b id="fifa-fizik"></b> FİZ</div>
+    </div>
+
+</div>
+
+
+   <div class="photo-actions">
+
+    <input id="profilUpload" type="file" accept="image/*" hidden>
+
+    <button id="selectFileBtn" class="btn">
+        Dosya Seç
+    </button>
+
+    <button class="btn" onclick="updatePhoto()">
+        Fotoğrafı Güncelle
+    </button>
+
+</div>
+
+</div>
+
+
+        <!-- --- SAĞ TARAF (MEVKİ SEÇİM) --- -->
         <div class="profil-right">
             <div class="fm-wrapper">
 
                 <div class="fm-field">
-
-                    <!-- BUTONLAR -->
                     <div class="fm-card" data-pos="ST" data-name="Santrafor">Santrafor</div>
-
-					
-
-                   
                     <div class="fm-card" data-pos="CM-R" data-name="Merkez Orta">Merkez Orta</div>
-
                     <div class="fm-card" data-pos="LW" data-name="Sol Kanat">Sol Kanat</div>
                     <div class="fm-card" data-pos="RW" data-name="Sağ Kanat">Sağ Kanat</div>
-
                     <div class="fm-card" data-pos="LB" data-name="Sol Bek">Sol Bek</div>
-      
                     <div class="fm-card" data-pos="CB-R" data-name="Stoper">Stoper</div>
                     <div class="fm-card" data-pos="RB" data-name="Sağ Bek">Sağ Bek</div>
-
                     <div class="fm-card" data-pos="GK" data-name="Kaleci">Kaleci</div>
-
                 </div>
 
-               <div class="fm-selection">
+                <div class="fm-selection">
+                    <div class="fm-input-group">
+                        <label>Asıl Mevki</label>
+                        <input id="mainPos" readonly>
+                    </div>
 
-    <div class="fm-input-group">
-        <label>Asıl Mevki</label>
-        <input id="mainPos" readonly>
-    </div>
+                    <div class="fm-input-group">
+                        <label>Yedek Mevki</label>
+                        <input id="subPos" readonly>
+                    </div>
 
-    <div class="fm-input-group">
-        <label>Yedek Mevki</label>
-        <input id="subPos" readonly>
-    </div>
-
-    <button class="btn" onclick="savePositions()">Mevkileri Kaydet</button>
-
-</div>
-
-				
-
+                    <button class="btn" onclick="savePositions()">Mevkileri Kaydet</button>
+                </div>
 
             </div>
         </div>
+
     </div>
 </div>
+
+
 
 
 
@@ -147,7 +171,39 @@
 <div id="oyuncular" class="page">
     <h2>Oyuncular</h2>
     <div id="oyuncuListe" class="card-grid"></div>
-	
+	<div id="rateModal" class="modal">
+    <div class="modal-content">
+
+        <h2 id="ratePlayerName"></h2>
+
+        <label>Şut</label>
+        <input type="number" id="rate-sut" min="0" max="100">
+
+        <label>Pas</label>
+        <input type="number" id="rate-pas" min="0" max="100">
+
+        <label>Kondisyon</label>
+        <input type="number" id="rate-kond" min="0" max="100">
+
+        <label>Hız</label>
+        <input type="number" id="rate-hiz" min="0" max="100">
+
+        <label>Fizik</label>
+        <input type="number" id="rate-fizik" min="0" max="100">
+
+        <label>Defans</label>
+        <input type="number" id="rate-def" min="0" max="100">
+
+        <label>Oyun Görüşü</label>
+        <input type="number" id="rate-oyunGorusu" min="0" max="100">
+
+        <button id="saveRating">Kaydet</button>
+        <button onclick="closeRatePanel()">Kapat</button>
+    </div>
+</div>
+
+
+
 </div>
 
 
@@ -179,11 +235,7 @@
 </div>
 
 
-<!-- ASİST KRALLIĞI -->
-<div id="asistKr" class="page">
-    <h2>Asist Krallığı</h2>
-    <div id="asistList" class="kr-list"></div>
-</div>
+
 
 
 <!-- KAZANANLAR -->
@@ -225,7 +277,7 @@
 
 <!-- GOL / ASİST Yönetimi -->
 <div id="gaYonetim" class="page">
-    <h2>Gol / Asist Yönetimi</h2>
+    <h2>Gol Yönetimi</h2>
 
     <div class="custom-select" data-id="gaPlayer">
         <div class="custom-display">Oyuncu Seç</div>
@@ -233,8 +285,6 @@
     </div>
 
     <input id="gaGol" type="number" placeholder="Gol">
-    <input id="gaAsist" type="number" placeholder="Asist">
-
     <button class="btn" onclick="ekleGolAsist()">Kaydet</button>
 </div>
 

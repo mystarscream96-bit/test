@@ -128,11 +128,11 @@
 
                 <div class="fm-field">
                     <div class="fm-card" data-pos="ST" data-name="Santrafor">Santrafor</div>
-                    <div class="fm-card" data-pos="CM-R" data-name="Merkez Orta">Merkez Orta</div>
+                    <div class="fm-card" data-pos="CM" data-name="Merkez Orta">Merkez Orta</div>
                     <div class="fm-card" data-pos="LW" data-name="Sol Kanat">Sol Kanat</div>
                     <div class="fm-card" data-pos="RW" data-name="Sağ Kanat">Sağ Kanat</div>
                     <div class="fm-card" data-pos="LB" data-name="Sol Bek">Sol Bek</div>
-                    <div class="fm-card" data-pos="CB-R" data-name="Stoper">Stoper</div>
+                    <div class="fm-card" data-pos="CB" data-name="Stoper">Stoper</div>
                     <div class="fm-card" data-pos="RB" data-name="Sağ Bek">Sağ Bek</div>
                     <div class="fm-card" data-pos="GK" data-name="Kaleci">Kaleci</div>
                 </div>
@@ -203,36 +203,41 @@
     </div>
 </div>
 </div>
+
+
+
+<!-- SAYFA KAPANIŞ / AÇILIŞ SİSTEMİ İÇİN GEREKEN DOĞRU YAPI -->
 <div id="haftaninKadro" class="page">
-    <h2>Haftanın Kadrosu</h2>
 
-    <div class="fm-wrapper hafta-wrapper">
+    <div class="haftaninLayout">
 
-        <div class="hkField">
-    <img src="https://i.hizliresim.com/272vnxd.jpg" class="hkFieldImg">
+        <!-- SOL: A Takımı -->
+        <div class="teamBox leftBox">
+            <h3>A Takımı</h3>
+            <div id="haftaTeamA" class="hk-list"></div>
+        </div>
 
-    <!-- 🔥 Oyuncuların yerleştirileceği alan -->
-    <div id="field" class="fieldArea"></div>
-</div>
-
-
-        <!-- A – B Takımı Listeleri -->
-        <div class="teamsRow haftaninTeams">
-            <div class="teamBox">
-                <h3>A Takımı</h3>
-                <div id="haftaTeamA" class="hk-list"></div>
-                <p id="haftaAPower" class="powerText"></p>
-            </div>
-
-            <div class="teamBox">
-                <h3>B Takımı</h3>
-                <div id="haftaTeamB" class="hk-list"></div>
-                <p id="haftaBPower" class="powerText"></p>
+        <!-- ORTA: SAHA -->
+        <div class="fieldCenter">
+            <div id="fieldContainer">
+                <img src="https://i.hizliresim.com/272vnxd.jpg" id="fieldImg">
+                <div id="playersOnField"></div>
             </div>
         </div>
 
+        <!-- SAĞ: B Takımı -->
+        <div class="teamBox rightBox">
+            <h3>B Takımı</h3>
+            <div id="haftaTeamB" class="hk-list"></div>
+        </div>
+
     </div>
+
 </div>
+
+
+
+
 
 
 

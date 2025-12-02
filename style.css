@@ -78,10 +78,7 @@ body {
   background: #00b7ff !important;
 }
 
-.fm-container {
-  width: 370px;
-  margin: 30px auto;
-}
+
 
 /* ——— PROFİL YAN YANA LAYOUT ——— */
 .profil-flex {
@@ -113,79 +110,6 @@ body {
     box-shadow: 0 0 20px rgba(0,0,0,0.4);
 }
 
-/* ——— FM SAHA ——— */
-.fm-wrapper {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-	
-}
-
-.fm-field {
-    width: 100%;
-    max-width: 350px;
-    height: 450px;
-    background: #0a7a33;
-    border-radius: 20px;
-    box-shadow: 0 0 30px rgba(0,0,0,0.6);
-    position: relative;
-}
-
-/* ——— FM24 3D KART ——— */
-.fm-card {
-    position: absolute;
-    padding: 9px 14px;
-    background: linear-gradient(145deg, #4d4bff, #1e1da8);
-    color: white;
-    font-size: 13px;
-    font-weight: 600;
-    border-radius: 10px;
-
-    box-shadow:
-        0 6px 12px rgba(0,0,0,0.5),
-        inset 0 4px 7px rgba(255,255,255,0.25);
-
-    transform: perspective(200px) translateZ(0px);
-    transition: .2s ease;
-}
-
-.fm-card:hover {
-    transform: perspective(200px) translateZ(20px) scale(1.07);
-}
-
-/* SEÇİLİ — ASIL */
-.fm-card.selected-main {
-    background: linear-gradient(145deg, #ffb300, #d88c00);
-    box-shadow: 0 0 20px rgba(255,174,0,0.9);
-}
-
-/* SEÇİLİ — YEDEK */
-.fm-card.selected-sub {
-    background: linear-gradient(145deg, #00c4ff, #0079b7);
-    box-shadow: 0 0 20px rgba(0,204,255,0.9);
-}
-
-
-
-/* —— MEVKİ SEÇİMİ —— */
-.fm-selection {
-    margin-top: 20px;
-    display: flex;
-    gap: 20px;
-    justify-content: center;
-}
-
-.fm-selection input {
-    width: 130px;
-    padding: 10px;
-    border-radius: 10px;
-    border: none;
-    background: rgba(255,255,255,0.15);
-    color: #fff;
-    text-align: center;
-    font-weight: bold;
-}
 
 /* ——— MOBİL UYUMLU ——— */
 @media(max-width: 768px) {
@@ -905,78 +829,6 @@ body {
 
 
 
-/* ============================================
-   POZİSYON KARTLARI — FM24 LIVERPOOL FORMA
-============================================ */
-.fm-card {
-    min-width: 80px !important;
-    padding: 8px 0 !important;
-    background-color: transparent !important;
-    background-image: url('https://i.hizliresim.com/1qy6nk5.png') !important;
-    background-size: 55px !important;
-    background-position: center top !important;
-    background-repeat: no-repeat !important;
-
-    box-shadow: none !important;
-    border: none !important;
-    text-shadow: 0 2px 4px rgba(0,0,0,0.9) !important;
-
-    padding-top: 60px !important;
-}
-
-.fm-card:hover {
-    transform: translateZ(25px) scale(1.1);
-    box-shadow: 0 0 25px red;
-}
-
-/* Seçili */
-.fm-card.selected-main {
-    background-color: transparent !important;
-    filter: drop-shadow(0 0 12px gold) !important;
-}
-.fm-card.selected-sub {
-    background-color: transparent !important;
-    filter: drop-shadow(0 0 12px cyan) !important;
-}
-
-/* ============================================
-   POZİSYON KOORDİNATLARI
-============================================ */
-.fm-card[data-pos="ST"]  { top: 15px; left: 135px; }
-.fm-card[data-pos="CM-R"] { top: 150px; left: 135px; }
-
-/* Sol kanat aynı – Sağ kanat sağa açıldı */
-.fm-card[data-pos="LW"] { top: 110px; left: 10px; }
-.fm-card[data-pos="RW"] { top: 110px; left: 265px; }
-
-/* Sol bek aynı – Sağ bek +25px sağa kaydırıldı */
-.fm-card[data-pos="LB"]   { top: 270px; left: 10px; }
-
-.fm-card[data-pos="CB-R"] { top: 270px; left: 135px; }
-.fm-card[data-pos="RB"]   { top: 270px; left: 260px; }  /* önce 230’du → 240 yaptım */
-.fm-card[data-pos="GK"] { top: 365px; left: 135px; }
-
-/* ============================================
-   ALT SEÇİM GÖSTERGE ALANI
-============================================ */
-.fm-selection {
-    margin-top: 22px;
-    display: flex;
-    justify-content: center;
-    gap: 25px;
-}
-
-.fm-selection input {
-    width: 160px;
-    padding: 12px;
-    background: rgba(255,255,255,0.15);
-    border-radius: 10px;
-    border: none;
-    text-align: center;
-    color: white;
-    font-weight: 700;
-}
-
 /* Mobil uyum */
 @media (max-width: 480px) {
     .fm-card {
@@ -1000,39 +852,6 @@ body {
 }
 .player-pos p {
     margin: 3px 0;
-}
-.fm-selection {
-    display: flex;
-    justify-content: center;
-    gap: 25px;
-    margin-top: 20px;
-}
-
-.fm-input-group {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-.fm-input-group label {
-    font-size: 18px;
-    font-weight: 600;
-    color: #fff;
-    margin-bottom: 8px;
-    text-shadow: 0 0 5px rgba(0,0,0,0.6);
-}
-
-.fm-selection input {
-    width: 200px;
-    padding: 14px;
-    border-radius: 12px;
-    background: rgba(255, 255, 255, 0.15);
-    border: 2px solid rgba(255,255,255,0.2);
-    color: #fff;
-    text-align: center;
-    font-size: 16px;
-    font-weight: 600;
-    backdrop-filter: blur(8px);
 }
 
 </style>
@@ -1270,16 +1089,7 @@ img:not([src]) {
 	margin-top: -40px !important;
 }
 
-.fm-field {
-    background-image: url("https://i.hizliresim.com/i1g8lc3.jpg"); /* Örnek saha resmi */
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
 
-    border-radius: 20px;
-    padding: 20px;
-    box-shadow: 0 0 25px rgba(0,0,0,0.25);
-}
 /* === Kadro Sayfası – Full Site UI Uyumlu === */
 
 #kadro .kadroWidget {
@@ -1812,3 +1622,126 @@ background: rgba(255,255,255,0.15);
 body {
     zoom: 0.75;   /* %75 boyut = %25 küçültme */
 }
+
+.fm-card {
+    min-width: 80px !important;
+    padding: 8px 0 !important;
+    background-color: transparent !important;
+    background-image: url('https://i.hizliresim.com/1qy6nk5.png') !important;
+    background-size: 55px !important;
+    background-position: center top !important;
+    background-repeat: no-repeat !important;
+	background: linear-gradient(145deg, #4d4bff, #1e1da8);
+    box-shadow: none !important;
+    border: none !important;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.9) !important;
+	color: white;
+    padding-top: 60px !important;
+	position: absolute;
+	font-size: 13px;
+	font-weight: 600;
+	border-radius: 10px;
+	transform: perspective(200px) translateZ(0px);
+    transition: .2s ease;
+}
+
+.fm-card:hover {
+    transform: translateZ(25px) scale(1.1);
+    box-shadow: 0 0 25px red;
+	transform: perspective(200px) translateZ(20px) scale(1.07);
+}
+
+/* Seçili */
+.fm-card.selected-main {
+    background-color: transparent !important;
+    filter: drop-shadow(0 0 12px gold) !important;
+	background: linear-gradient(145deg, #ffb300, #d88c00);
+    box-shadow: 0 0 20px rgba(255,174,0,0.9);
+}
+.fm-card.selected-sub {
+    background-color: transparent !important;
+    filter: drop-shadow(0 0 12px cyan) !important;
+	background: linear-gradient(145deg, #00c4ff, #0079b7);
+    box-shadow: 0 0 20px rgba(0,204,255,0.9);
+}
+.fm-container {
+  width: 370px;
+  margin: 30px auto;
+}
+.fm-wrapper {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+	
+}
+
+.fm-field {
+    width: 100%;
+    max-width: 350px;
+    height: 450px;
+	background-image: url("https://i.hizliresim.com/i1g8lc3.jpg"); /* Örnek saha resmi */
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+	position: relative;
+    border-radius: 20px;
+    padding: 20px;
+    box-shadow: 0 0 25px rgba(0,0,0,0.25);
+}
+
+.fm-selection {
+    display: flex;
+    justify-content: center;
+    gap: 25px;
+    margin-top: 20px;
+}
+
+.fm-input-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.fm-input-group label {
+    font-size: 18px;
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 8px;
+    text-shadow: 0 0 5px rgba(0,0,0,0.6);
+}
+
+.fm-selection input {
+    width: 200px;
+    padding: 14px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.15);
+    border: 2px solid rgba(255,255,255,0.2);
+    color: #fff;
+    text-align: center;
+    font-size: 16px;
+    font-weight: 600;
+    backdrop-filter: blur(8px);
+}
+
+
+
+/* ============================================
+   POZİSYON KOORDİNATLARI
+============================================ */
+.fm-card[data-pos="ST"]  { top: 15px; left: 135px; }
+.fm-card[data-pos="CM-R"] { top: 150px; left: 135px; }
+
+/* Sol kanat aynı – Sağ kanat sağa açıldı */
+.fm-card[data-pos="LW"] { top: 110px; left: 10px; }
+.fm-card[data-pos="RW"] { top: 110px; left: 265px; }
+
+/* Sol bek aynı – Sağ bek +25px sağa kaydırıldı */
+.fm-card[data-pos="LB"]   { top: 270px; left: 10px; }
+
+.fm-card[data-pos="CB-R"] { top: 270px; left: 135px; }
+.fm-card[data-pos="RB"]   { top: 270px; left: 260px; }  /* önce 230’du → 240 yaptım */
+.fm-card[data-pos="GK"] { top: 365px; left: 135px; }
+
+
+

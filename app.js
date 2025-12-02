@@ -34,11 +34,11 @@ let mainPos = null;
 let subPos = null;
 const POS_MAP = {
     "ST": "Santrafor",
-    "CM-R": "Merkez Orta",
+    "CM": "Merkez Orta",
     "LW": "Sol Kanat",
     "RW": "Sağ Kanat",
     "LB": "Sol Bek",
-    "CB-R": "Stoper",
+    "CB": "Stoper",
     "RB": "Sağ Bek",
     "GK": "Kaleci"
 };
@@ -46,11 +46,11 @@ const POS_MAP = {
 const POS_MAP_REVERSE = {
     "Kaleci": "GK",
     "Sol Bek": "LB",
-    "Stoper": "CB-R",
+    "Stoper": "CB",
     "Sağ Bek": "RB",
     "Sol Kanat": "LW",
     "Sağ Kanat": "RW",
-    "Merkez Orta": "CM-R",
+    "Merkez Orta": "CM",
     "Santrafor": "ST"
 };
 
@@ -1032,99 +1032,367 @@ function initCustomSelects() {
         });
     });
 }
-function normalizePos(pos) {
-    if (!pos) return null;
-    if (pos === "CB-R") return "CB";
-    if (pos === "CM-R") return "CM";
-    return pos;
+/* ===============================
+   POZİSYON NORMALİZASYONU
+================================ */
+function normalizePos(posName) {
+
+    if (!posName) return null;
+	posName = posName.toString().trim().toLowerCase();
+    let p = posName
+        .toString()
+        .trim()
+        .toLowerCase()
+        .replace(/\s+/g, " ");
+
+    const map = {
+        "kaleci": "GK",
+
+        "sol bek": "LB",
+        "sağ bek": "RB",
+        "sag bek": "RB",
+
+        "stoper": "CB",
+        "cb": "CB",
+        "cb-r": "CB",
+
+        "sol kanat": "LW",
+        "sağ kanat": "RW",
+        "sag kanat": "RW",
+
+        "merkez orta": "CM",
+        "cm": "CM",
+        "cm-r": "CM",
+
+        "santrafor": "ST",
+        "forvet": "ST"
+    };
+
+    return map[p] || null;
 }
 
-function buildBalancedTeams(selectedPlayers, gkA, gkB) {
 
-    const outfield = selectedPlayers.filter(id => id !== gkA && id !== gkB);
 
-    // 🔥 normalize edilmiş pozisyon listesi
-    const posList = ["ST", "RW", "LW", "CM", "LB", "RB", "CB"];
 
-    let A = [gkA];
-    let B = [gkB];
 
-    let posMap = {
-        GK: gkA,
-        GK2: gkB
+/* ===============================
+   OVR Hesaplama
+================================ */
+function getOVR(stats) {
+    if (!stats) return 0;
+    return Math.round(
+        ((stats.sut||0) +
+         (stats.pas||0) +
+         (stats.kondisyon||0) +
+         (stats.hiz||0) +
+         (stats.fizik||0) +
+         (stats.defans||0)) / 6
+    );
+}
+
+/* ===============================
+   OYUNCU POZİSYON OBJESİ
+================================ */
+function getPlayerPositions(p) {
+    return {
+        id: p.id,
+        name: p.name,
+        main: normalizePos(p.mainPos),
+        sub: normalizePos(p.subPos),
+        ovr: getOVR(p.stats),
+        photo: p.photo
+    };
+}
+
+/* ============================================
+   OYUNCU POZİSYON OKUMA + OVR
+============================================ */
+function getPlayerPositions(p) {
+
+    const main = normalizePos(p.mainPos);
+    const sub  = normalizePos(p.subPos);
+
+    const s = p.stats || {};
+    const ovr = Math.round(
+        ((s.sut||0)+(s.pas||0)+(s.kondisyon||0)+(s.hiz||0)+(s.fizik||0)+(s.defans||0)) / 6
+    );
+
+    return {
+        id: p.id,
+        name: p.name,
+        main,
+        sub,
+        ovr
+    };
+}
+
+/* ==========================================================
+   TAKIM DENGELEYİCİ (OVR BALANCER)
+========================================================== */
+function balanceTeams(teamA, teamB, posMap) {
+
+    const getPlayer = id => CACHE.players.find(p => p.id === id);
+
+    const getOVR = p => {
+        if (!p || !p.stats) return 0;
+        const s = p.stats;
+        return Math.round(
+            ((s.sut||0)+(s.pas||0)+(s.kondisyon||0)+(s.hiz||0)+(s.fizik||0)+(s.defans||0)) / 6
+        );
     };
 
-    let used = new Set([gkA, gkB]);
-
-    const avg = stats => {
-        if (!stats) return 0;
-        return (
-            (stats.sut || 0) +
-            (stats.pas || 0) +
-            (stats.kondisyon || 0) +
-            (stats.hiz || 0) +
-            (stats.fizik || 0) +
-            (stats.defans || 0)
-        ) / 6;
+    const getPos = p => {
+        if (!p) return null;
+        return normalizePos(p.mainPos) || normalizePos(p.subPos) || null;
     };
 
-    let flip = false;
+    const sum = arr => arr.reduce((t,id)=>t+getOVR(getPlayer(id)),0);
 
-    posList.forEach(pos => {
+    let attempts = 0;
 
-        let pool = outfield
-            .map(id => CACHE.players.find(p => p.id === id))
-            .filter(p => p && !used.has(p.id))
-            .filter(p => {
-                const main = normalizePos(POS_MAP_REVERSE[p.mainPos]);
-                const sub  = normalizePos(POS_MAP_REVERSE[p.subPos]);
-                return main === pos || sub === pos;
-            })
-            .sort((a,b) => avg(b.stats) - avg(a.stats));
+    while (attempts++ < 120) {
 
-        // fallback
-        if (pool.length < 2) {
-            let leftovers = outfield
-                .map(id => CACHE.players.find(p => p.id === id))
-                .filter(p => p && !used.has(p.id))
-                .sort((a,b) => avg(b.stats) - avg(a.stats));
+        let sumA = sum(teamA);
+        let sumB = sum(teamB);
+        let diff = sumA - sumB;
 
-            while (pool.length < 2 && leftovers.length > 0) {
-                pool.push(leftovers.shift());
+        // hedef fark
+        if (Math.abs(diff) <= 15) break;
+
+        let strong = diff > 0 ? teamA : teamB;
+        let weak   = diff > 0 ? teamB : teamA;
+
+        let bestSwap = null;
+        let bestImpact = 0;
+
+        // EN İYİ SWAP’I ARIYORUZ
+        for (let sid of strong) {
+            const sp = getPlayer(sid);
+            const sOvr = getOVR(sp);
+
+            for (let wid of weak) {
+                const wp = getPlayer(wid);
+                const wOvr = getOVR(wp);
+
+                let impact = Math.abs((sumA - sOvr + wOvr) - (sumB - wOvr + sOvr));
+
+                if (!bestSwap || impact < bestImpact) {
+                    bestImpact = impact;
+                    bestSwap = { sid, wid };
+                }
             }
         }
 
-        while (pool.length < 2) pool.push(null);
+        if (!bestSwap) break;
 
-        let best1 = pool[0];
-        let best2 = pool[1];
+        const { sid, wid } = bestSwap;
 
-        let Aplayer = flip ? best2 : best1;
-        let Bplayer = flip ? best1 : best2;
+        // swap uygula
+        strong.splice(strong.indexOf(sid), 1);
+        weak.splice(weak.indexOf(wid), 1);
+        strong.push(wid);
+        weak.push(sid);
 
-        // A
-        if (Aplayer && !used.has(Aplayer.id)) {
-            A.push(Aplayer.id);
-            used.add(Aplayer.id);
-            posMap[pos === "CM" ? "CM-R" : pos === "CB" ? "CB-R" : pos] = Aplayer.id;
-        } else {
-            posMap[pos] = null;
+        // POSMAP
+        for (let k in posMap) {
+            if (posMap[k] === sid) posMap[k] = wid;
+            else if (posMap[k] === wid) posMap[k] = sid;
         }
+    }
 
-        // B
-        if (Bplayer && !used.has(Bplayer.id)) {
-            B.push(Bplayer.id);
-            used.add(Bplayer.id);
-            posMap[(pos === "CM" ? "CM-R" : pos === "CB" ? "CB-R" : pos) + "2"] = Bplayer.id;
-        } else {
-            posMap[pos + "2"] = null;
-        }
+    return { teamA, teamB, posMap };
+}
 
-        flip = !flip;
+
+
+
+
+
+/* ==========================================================
+   ANA TAKIM OLUŞTURUCU — DENGELİ SÜRÜM
+========================================================== */
+function buildBalancedTeams(selectedPlayers, gkA, gkB) {
+
+    const POS_ORDER = ["ST", "RW", "LW", "CM", "LB", "RB", "CB"];
+
+
+    let teamA = [gkA];
+    let teamB = [gkB];
+
+    let players = selectedPlayers
+        .map(id => CACHE.players.find(p => p.id === id))
+        .filter(p => p && p.id !== gkA && p.id !== gkB)
+        .map(p => getPlayerPositions(p));
+
+    /* =====================================
+       1) MAIN POZISYON GRUPLAMA
+    ====================================== */
+    let groups = {};  
+    POS_ORDER.forEach(pos => groups[pos] = []);
+
+    players.forEach(p => {
+        if (POS_ORDER.includes(p.main))
+            groups[p.main].push(p);
     });
 
-    return { teamA: A, teamB: B, posMap };
+    POS_ORDER.forEach(pos => groups[pos].sort((a,b)=>b.ovr - a.ovr));
+
+    let posMap = {};
+    let used = new Set();
+
+    /* =====================================
+       2) MAIN SLOT DOLDUR
+    ====================================== */
+    POS_ORDER.forEach(pos => {
+
+        const list = groups[pos];
+
+        if (list.length >= 2) {
+            posMap[pos] = list[0].id;
+            posMap[pos+"2"] = list[1].id;
+
+            teamA.push(list[0].id);
+            teamB.push(list[1].id);
+
+            used.add(list[0].id);
+            used.add(list[1].id);
+        }
+        else if (list.length === 1) {
+            posMap[pos] = list[0].id;
+            posMap[pos+"2"] = null;
+
+            teamA.push(list[0].id);
+            used.add(list[0].id);
+        }
+        else {
+            posMap[pos] = null;
+            posMap[pos+"2"] = null;
+        }
+    });
+
+    /* =====================================
+       3) SUB HAVUZU
+    ====================================== */
+    let subPlayers = players.filter(p => !used.has(p.id));
+    subPlayers.sort((a,b)=>b.ovr - a.ovr);
+
+    /* =====================================
+       4) SUB → BOŞ SLOT DOLDUR
+    ====================================== */
+    subPlayers.forEach(p => {
+        if (!p.sub) return;
+
+        let A_slot = posMap[p.sub];
+        let B_slot = posMap[p.sub + "2"];
+
+        if (!A_slot) {
+            posMap[p.sub] = p.id;
+            teamA.push(p.id);
+            used.add(p.id);
+            return;
+        }
+
+        if (!B_slot) {
+            posMap[p.sub + "2"] = p.id;
+            teamB.push(p.id);
+            used.add(p.id);
+            return;
+        }
+    });
+
+    /* =====================================
+       5) KALANLARI OVR’A GÖRE DOLDUR
+    ====================================== */
+    let leftovers = players.filter(p => !used.has(p.id));
+    leftovers.sort((a,b)=>b.ovr - a.ovr);
+
+    POS_ORDER.forEach(pos => {
+
+        if (!posMap[pos] && leftovers.length > 0) {
+            let p = leftovers.shift();
+            posMap[pos] = p.id;
+            teamA.push(p.id);
+            used.add(p.id);
+        }
+
+        if (!posMap[pos+"2"] && leftovers.length > 0) {
+            let p = leftovers.shift();
+            posMap[pos+"2"] = p.id;
+            teamB.push(p.id);
+            used.add(p.id);
+        }
+
+    });
+
+    /* =====================================
+       6) GK EKLE
+    ====================================== */
+    posMap["GK"] = gkA;
+    posMap["GK2"] = gkB;
+
+    /* =====================================
+       7) OVR DENGELEME
+    ====================================== */
+    let balanced = balanceTeams(teamA, teamB, posMap);
+
+return {
+    teamA: balanced.teamA,
+    teamB: balanced.teamB,
+    posMap: balanced.posMap
+};
+
 }
+
+
+
+// ===========================
+//  DEBUG: STOPER (CB) DURUMU
+// ===========================
+function debugCB() {
+    if (!window.posMap) {
+        console.log("posMap bulunamadı! Kadro oluşturulmadı.");
+        return;
+    }
+
+    const cbA = posMap["CB"];
+    const cbB = posMap["CB2"];
+
+    const getPlayer = (id) => CACHE.players.find(p => p.id === id);
+
+    console.log("====== STOPER (CB) DURUMU ======");
+    console.log("A Takımı CB :", cbA ? getPlayer(cbA).name : "YOK");
+    console.log("B Takımı CB2:", cbB ? getPlayer(cbB).name : "YOK");
+
+    if (cbA) console.log("A Takımı CB OVR:", getOVR(getPlayer(cbA).stats));
+    if (cbB) console.log("B Takımı CB OVR:", getOVR(getPlayer(cbB).stats));
+}
+
+
+// ===========================
+//  DEBUG: TÜM POZİSYONLAR
+// ===========================
+function debugAllPositions() {
+    if (!window.posMap) {
+        console.log("posMap bulunamadı! Kadro oluşturulmadı.");
+        return;
+    }
+
+    const getPlayer = (id) => CACHE.players.find(p => p.id === id);
+
+    console.log("====== TÜM POZİSYONLAR ======");
+
+    ["GK","CB","LB","RB","CM","LW","RW","ST"].forEach(pos => {
+        const A = posMap[pos];
+        const B = posMap[pos + "2"];
+
+        console.log(
+            pos.padEnd(3),
+            "| A:", A ? getPlayer(A).name : "YOK",
+            "| B:", B ? getPlayer(B).name : "YOK"
+        );
+    });
+}
+
 
 
 
@@ -1181,6 +1449,19 @@ function fillMissing(pool, outfield, used) {
 
 
 
+function clean(obj) {
+    if (Array.isArray(obj)) {
+        return obj.filter(v => v !== undefined);
+    }
+    if (typeof obj === "object" && obj !== null) {
+        let out = {};
+        for (let k in obj) {
+            if (obj[k] !== undefined) out[k] = obj[k];
+        }
+        return out;
+    }
+    return obj;
+}
 
 
 document.getElementById("buildBtn").onclick = async () => {
@@ -1196,12 +1477,20 @@ document.getElementById("buildBtn").onclick = async () => {
 
     const result = buildBalancedTeams(selectedPlayers, gkA, gkB);
 
-    await db.collection("haftaninKadro").doc("latest").set({
-        teamA: result.teamA,
-        teamB: result.teamB,
-        posMap: result.posMap,
+    // GLOBAL posMap
+    posMap = result.posMap;
+    window.lastResult = result;
+
+    const dataToSave = {
+        teamA: clean(result.teamA),
+        teamB: clean(result.teamB),
+        posMap: clean(result.posMap),
         createdAt: new Date().toISOString()
-    });
+    };
+
+    console.log("SAVE DATA →", dataToSave);
+
+    await db.collection("haftaninKadro").doc("latest").set(dataToSave);
 
     alert("Kadro oluşturuldu!");
 };
@@ -1212,14 +1501,15 @@ function posTranslate(code) {
     return {
         "GK": "Kaleci",
         "LB": "Sol Bek",
-        "CB-R": "Stoper",
+        "CB": "Stoper",
         "RB": "Sağ Bek",
         "LW": "Sol Kanat",
         "RW": "Sağ Kanat",
-        "CM-R": "Merkez Orta",
+        "CM": "Merkez Orta",
         "ST": "Santrafor"
     }[code] || "-";
 }
+
 
 
 async function loadHaftaninKadro() {
@@ -1235,7 +1525,7 @@ async function loadHaftaninKadro() {
     teamABox.innerHTML = "";
     teamBBox.innerHTML = "";
 
-    const posList = ["GK","ST","RW","LW","CM-R","LB","RB","CB-R"];
+    const posList = ["GK","CB","LB","RB","CM","LW","RW","ST"];
 
     // OVR Hesaplayıcı
     const getOVR = (p) => {
@@ -1254,7 +1544,7 @@ async function loadHaftaninKadro() {
     };
 
     posList.forEach(pos => {
-        const key = pos === "CM" ? "CM-R" : pos;
+        const key = pos;
 
         const A_id = posMap[key] || null;
         const B_id = posMap[key + "2"] || null;
@@ -1292,6 +1582,63 @@ async function loadHaftaninKadro() {
             </div>
         `;
     });
+// === SAHA YERLEŞTİRME ===
+const field = document.getElementById("playersOnField");
+field.innerHTML = "";
+
+// A TAKIMI POZİSYONLARI (SOL TARAF)
+const coordsA = {
+    "GK":  { x: 8, y: 52 },
+    "CB":{ x: 20, y: 52 },
+    "LB":  { x: 25, y: 20 },
+    "RB":  { x: 25, y: 80 },
+    "CM":{ x: 45, y: 52 },
+    "LW":  { x: 60, y: 15 },
+    "RW":  { x: 60, y: 85 },
+    "ST":  { x: 72, y: 52 }
+};
+
+// B TAKIMI POZİSYONLARI (SAĞ TARAF)
+const coordsB = {
+    "GK":  { x: 92, y: 52 },
+    "CB":{ x: 80, y: 52 },
+    "LB":  { x: 75, y: 20 },
+    "RB":  { x: 75, y: 80 },
+    "CM":{ x: 55, y: 52 },
+    "LW":  { x: 40, y: 15 },
+    "RW":  { x: 40, y: 85 },
+    "ST":  { x: 28, y: 52 }
+};
+
+function drawOnField(player, pos, team) {
+    if (!player) return;
+
+    const posKey = pos;
+    const c = team === "A" ? coordsA[posKey] : coordsB[posKey];
+    if (!c) return;
+
+   field.innerHTML += `
+    <div class="playerMark" style="left:${c.x}%; top:${c.y}%;">
+        <div class="formWrapper">
+            <img src="${team === "A" ? FORMA_A : FORMA_B}" class="formImg">
+            <span class="formNumber">${getOVR(player)}</span>
+        </div>
+        <div class="playerName">${player.name}</div>
+    </div>
+`;
+
+}
+
+// ÇİME OYUNCULARI ÇİZ
+posList.forEach(pos => {
+   const key = pos;
+
+    const A_player = CACHE.players.find(p => p.id === posMap[key]);
+    const B_player = CACHE.players.find(p => p.id === posMap[key + "2"]);
+
+    drawOnField(A_player, key, "A");
+    drawOnField(B_player, key, "B");
+});
 
     console.log("POS MAP:", posMap);
     console.log("TEAM A:", data.teamA);
@@ -1299,6 +1646,44 @@ async function loadHaftaninKadro() {
 }
 
 
+function debugTeamOVR(teamA, teamB) {
+    const getOVR = (p) => {
+        if (!p || !p.stats) return 0;
+        const s = p.stats;
+        return Math.round(
+            ((s.sut||0)+(s.pas||0)+(s.kondisyon||0)+(s.hiz||0)+(s.fizik||0)+(s.defans||0)) / 6
+        );
+    };
+
+    let sumA = 0;
+    let sumB = 0;
+
+    console.log("====== TAKIM OVR DEBUG ======");
+
+    console.log("---- A Takımı ----");
+    teamA.forEach(id => {
+        const p = CACHE.players.find(x => x.id === id);
+        if (!p) return;
+        const ovr = getOVR(p);
+        sumA += ovr;
+        console.log(p.name, "→", ovr);
+    });
+
+    console.log("TOPLAM A:", sumA);
+
+    console.log("---- B Takımı ----");
+    teamB.forEach(id => {
+        const p = CACHE.players.find(x => x.id === id);
+        if (!p) return;
+        const ovr = getOVR(p);
+        sumB += ovr;
+        console.log(p.name, "→", ovr);
+    });
+
+    console.log("TOPLAM B:", sumB);
+
+    console.log("FARK:", Math.abs(sumA - sumB));
+}
 
 	
 

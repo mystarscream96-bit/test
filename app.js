@@ -175,7 +175,27 @@ function buildSingleSelect(wrapper, items) {
         }
     };
 }
+async function addPlayer() {
+    let name = document.getElementById("newPlayerName").value.trim();
+    let file = document.getElementById("newPlayerPhoto").files[0];
 
+    if (!name) return;
+
+    let photoURL = DEFAULT_PHOTO;
+
+    if (file) {
+        const uploaded = await upload.uploadFile(file);
+        photoURL = uploaded.fileUrl;
+    }
+
+    await db.collection("players").add({ name, photo: photoURL });
+
+    document.getElementById("newPlayerName").value = "";
+    document.getElementById("newPlayerPhoto").value = "";
+
+    loadAll();
+    notify("Oyuncu Eklendi");
+}
 
 
 // ==========================================================
@@ -861,7 +881,10 @@ function closeRatePanel() {
 
 document.getElementById("saveRating").onclick = async () => {
 
-    const newStats = {
+    console.log("⭐ Kaydet tıklandı, oyuncu ID:", selectedPlayerId);
+
+    // 1) Popup’tan alınan statlar
+    let newStats = {
         sut: Number(document.getElementById("rate-sut").value),
         pas: Number(document.getElementById("rate-pas").value),
         kondisyon: Number(document.getElementById("rate-kond").value),
@@ -871,21 +894,49 @@ document.getElementById("saveRating").onclick = async () => {
         oyunGorusu: Number(document.getElementById("rate-oyunGorusu").value)
     };
 
+    console.log("📊 GİRİLEN STATLAR:", newStats);
+
+    // **ESKİ STATLAR TAMAMEN SİLİNİYOR**
+    // Firebase'e sadece yeni statlar yazılacak
+
+    const player = CACHE.players.find(x => x.id === selectedPlayerId);
+    const pos = mapPosition(player.mainPos);
+
+    let bonusStats = [];
+
+    if (pos === "ST") bonusStats = ["sut", "hiz", "kondisyon"];
+    else if (pos === "LW" || pos === "RW") bonusStats = ["sut", "hiz", "pas"];
+    else if (pos === "CM") bonusStats = ["oyunGorusu", "pas", "fizik"];
+    else if (pos === "CB" || pos === "LB" || pos === "RB") bonusStats = ["fizik", "defans", "hiz"];
+
+    console.log("🎁 BONUS UYGULANACAK STATLAR:", bonusStats);
+
+    // BONUS UYGULA — sadece kullanıcı değer girdiyse
+    bonusStats.forEach(stat => {
+        if (!isNaN(newStats[stat]) && newStats[stat] > 0) {
+            let oldVal = newStats[stat];
+            newStats[stat] = Math.round(newStats[stat] * 1.10);
+            console.log(`➕ BONUS: ${stat} → ${oldVal} ➜ ${newStats[stat]}`);
+        }
+    });
+
+    // Firebase'e yeni temiz statları yaz
     await db.collection("players")
         .doc(selectedPlayerId)
         .update({ stats: newStats });
 
-    await refreshCache();
+    console.log("💾 Firestore güncellendi");
 
+    await refreshCache();
     closeRatePanel();
     notify("Puanlar Kaydedildi");
 
-    // Eğer profil kendi profili ise kartı güncelle
-    const p = CACHE.players.find(x => x.id === selectedPlayerId);
-    if (p.name === currentUser) {
-        renderFifaCard({ ...p, stats: newStats });
+    const updatedPlayer = CACHE.players.find(x => x.id === selectedPlayerId);
+    if (updatedPlayer.name === currentUser) {
+        renderFifaCard({ ...updatedPlayer });
     }
 };
+
 
 
 function renderFifaCard(p) {
@@ -910,11 +961,11 @@ function renderFifaCard(p) {
     document.getElementById("fifa-hiz").textContent = stats.hiz ?? 0;
     document.getElementById("fifa-fizik").textContent = stats.fizik ?? 0;
     document.getElementById("fifa-defans").textContent = stats.defans ?? 0;
-
+	
     // OVR hesapla
     const ovr = Math.round(
         (stats.sut + stats.pas + stats.kondisyon +
-         stats.hiz + stats.fizik + stats.defans) / 6
+         stats.hiz + stats.fizik + stats.defans + stats.oyunGorusu) / 7
     );
 
     document.getElementById("fifa-overall").textContent = ovr;
@@ -1028,10 +1079,21 @@ function initCustomSelects() {
                 display.innerText = opt.innerText;
                 sel.dataset.value = opt.dataset.id;
                 options.style.display = "none";
+
+                // GK A seçildi
+                if (sel.id === "gkASelect") {
+                    selectGKA(opt.dataset.id, opt.innerText);
+                }
+
+                // GK B seçildi
+                if (sel.id === "gkBSelect") {
+                    selectGKB(opt.dataset.id, opt.innerText);
+                }
             };
         });
     });
 }
+
 /* ===============================
    POZİSYON NORMALİZASYONU
 ================================ */
@@ -1086,7 +1148,8 @@ function getOVR(stats) {
          (stats.kondisyon||0) +
          (stats.hiz||0) +
          (stats.fizik||0) +
-         (stats.defans||0)) / 6
+		 (stats.oyunGorusu||0) +
+         (stats.defans||0)) / 7
     );
 }
 
@@ -1114,7 +1177,7 @@ function getPlayerPositions(p) {
 
     const s = p.stats || {};
     const ovr = Math.round(
-        ((s.sut||0)+(s.pas||0)+(s.kondisyon||0)+(s.hiz||0)+(s.fizik||0)+(s.defans||0)) / 6
+        ((s.sut||0)+(s.pas||0)+(s.kondisyon||0)+(s.hiz||0)+(s.fizik||0)+(s.oyunGorusu||0)+(s.defans||0)) / 7
     );
 
     return {
@@ -1137,13 +1200,8 @@ function balanceTeams(teamA, teamB, posMap) {
         if (!p || !p.stats) return 0;
         const s = p.stats;
         return Math.round(
-            ((s.sut||0)+(s.pas||0)+(s.kondisyon||0)+(s.hiz||0)+(s.fizik||0)+(s.defans||0)) / 6
+            ((s.sut||0)+(s.pas||0)+(s.kondisyon||0)+(s.hiz||0)+(s.fizik||0)+(s.oyunGorusu||0)+(s.defans||0)) / 7
         );
-    };
-
-    const getPos = p => {
-        if (!p) return null;
-        return normalizePos(p.mainPos) || normalizePos(p.subPos) || null;
     };
 
     const sum = arr => arr.reduce((t,id)=>t+getOVR(getPlayer(id)),0);
@@ -1156,7 +1214,6 @@ function balanceTeams(teamA, teamB, posMap) {
         let sumB = sum(teamB);
         let diff = sumA - sumB;
 
-        // hedef fark
         if (Math.abs(diff) <= 15) break;
 
         let strong = diff > 0 ? teamA : teamB;
@@ -1167,10 +1224,18 @@ function balanceTeams(teamA, teamB, posMap) {
 
         // EN İYİ SWAP’I ARIYORUZ
         for (let sid of strong) {
+
+            // ❌ GK ASLA TAKIM DEĞİŞTİREMEZ
+            if (sid === posMap["GK"] || sid === posMap["GK2"]) continue;
+
             const sp = getPlayer(sid);
             const sOvr = getOVR(sp);
 
             for (let wid of weak) {
+
+                // ❌ GK ASLA TAKIM DEĞİŞTİREMEZ
+                if (wid === posMap["GK"] || wid === posMap["GK2"]) continue;
+
                 const wp = getPlayer(wid);
                 const wOvr = getOVR(wp);
 
@@ -1193,7 +1258,7 @@ function balanceTeams(teamA, teamB, posMap) {
         strong.push(wid);
         weak.push(sid);
 
-        // POSMAP
+        // POSMAP güncelleme
         for (let k in posMap) {
             if (posMap[k] === sid) posMap[k] = wid;
             else if (posMap[k] === wid) posMap[k] = sid;
@@ -1202,7 +1267,6 @@ function balanceTeams(teamA, teamB, posMap) {
 
     return { teamA, teamB, posMap };
 }
-
 
 
 
@@ -1412,8 +1476,9 @@ function getPositionCandidates(ids, pos) {
                 (p.stats?.kondisyon || 0) +
                 (p.stats?.hiz || 0) +
                 (p.stats?.fizik || 0) +
+				(p.stats?.oyunGorusu || 0) +
                 (p.stats?.defans || 0)
-            ) / 6;
+            ) / 7;
 
             return { ...p, match, score };
         })
@@ -1424,8 +1489,8 @@ function avgScore(s) {
     if (!s) return 0;
     return (
         (s.sut||0) + (s.pas||0) + (s.kondisyon||0) +
-        (s.hiz||0) + (s.fizik||0) + (s.defans||0)
-    ) / 6;
+        (s.hiz||0) + (s.fizik||0) + (s.oyunGorusu||0) + (s.defans||0)
+    ) / 7;
 }
 
 
@@ -1462,7 +1527,17 @@ function clean(obj) {
     }
     return obj;
 }
+function selectGKA(playerId, playerName) {
+    const el = document.querySelector("#gkASelect");
+    el.dataset.value = playerId;
+    el.querySelector(".custom-display").innerText = playerName;
+}
 
+function selectGKB(playerId, playerName) {
+    const el = document.querySelector("#gkBSelect");
+    el.dataset.value = playerId;
+    el.querySelector(".custom-display").innerText = playerName;
+}
 
 document.getElementById("buildBtn").onclick = async () => {
 
@@ -1477,7 +1552,6 @@ document.getElementById("buildBtn").onclick = async () => {
 
     const result = buildBalancedTeams(selectedPlayers, gkA, gkB);
 
-    // GLOBAL posMap
     posMap = result.posMap;
     window.lastResult = result;
 
@@ -1488,12 +1562,34 @@ document.getElementById("buildBtn").onclick = async () => {
         createdAt: new Date().toISOString()
     };
 
-    console.log("SAVE DATA →", dataToSave);
-
     await db.collection("haftaninKadro").doc("latest").set(dataToSave);
 
     alert("Kadro oluşturuldu!");
 };
+
+function loadGKSelectors() {
+    const gkAOptions = document.querySelector("#gkASelect .custom-options");
+    const gkBOptions = document.querySelector("#gkBSelect .custom-options");
+
+    gkAOptions.innerHTML = "";
+    gkBOptions.innerHTML = "";
+
+    CACHE.players.forEach(p => {
+        // A takımı için kaleci seçeneği
+        gkAOptions.innerHTML += `
+            <div class="option" onclick="selectGKA('${p.id}', '${p.name}')">
+                ${p.name}
+            </div>
+        `;
+
+        // B takımı için kaleci seçeneği
+        gkBOptions.innerHTML += `
+            <div class="option" onclick="selectGKB('${p.id}', '${p.name}')">
+                ${p.name}
+            </div>
+        `;
+    });
+}
 
 
 
@@ -1532,7 +1628,7 @@ async function loadHaftaninKadro() {
         if (!p || !p.stats) return 0;
         const s = p.stats;
         return Math.round(
-            ((s.sut||0)+(s.pas||0)+(s.kondisyon||0)+(s.hiz||0)+(s.fizik||0)+(s.defans||0)) / 6
+            ((s.sut||0)+(s.pas||0)+(s.kondisyon||0)+(s.hiz||0)+(s.fizik||0)+(s.oyunGorusu||0)+(s.defans||0)) / 7
         );
     };
 
@@ -1602,11 +1698,11 @@ const coordsA = {
 const coordsB = {
     "GK":  { x: 92, y: 52 },
     "CB":{ x: 80, y: 52 },
-    "LB":  { x: 75, y: 20 },
-    "RB":  { x: 75, y: 80 },
+    "LB":  { x: 75, y: 80 },
+    "RB":  { x: 75, y: 20 },
     "CM":{ x: 55, y: 52 },
-    "LW":  { x: 40, y: 15 },
-    "RW":  { x: 40, y: 85 },
+    "LW":  { x: 40, y: 85 },
+    "RW":  { x: 40, y: 15 },
     "ST":  { x: 28, y: 52 }
 };
 
@@ -1651,7 +1747,7 @@ function debugTeamOVR(teamA, teamB) {
         if (!p || !p.stats) return 0;
         const s = p.stats;
         return Math.round(
-            ((s.sut||0)+(s.pas||0)+(s.kondisyon||0)+(s.hiz||0)+(s.fizik||0)+(s.defans||0)) / 6
+            ((s.sut||0)+(s.pas||0)+(s.kondisyon||0)+(s.hiz||0)+(s.fizik||0)+(s.oyunGorusu||0)+(s.defans||0)) / 7
         );
     };
 
@@ -1685,10 +1781,131 @@ function debugTeamOVR(teamA, teamB) {
     console.log("FARK:", Math.abs(sumA - sumB));
 }
 
-	
+// %10 arttırma fonksiyonu
+function boost(value) {
+    return Math.round((value || 0) * 1.10); // %10 bonus
+}
+
+function mapPosition(pos) {
+    if (!pos) return "";
+    pos = pos.toLowerCase().trim();
+
+    if (pos === "santrafor") return "ST";
+    if (pos === "merkez orta") return "CM";
+    if (pos === "sol kanat") return "LW";
+    if (pos === "sağ kanat") return "RW";
+    if (pos === "stoper") return "CB";
+    if (pos === "sol bek") return "LB";
+    if (pos === "sağ bek") return "RB";
+    if (pos === "kaleci") return "GK";
+
+    console.log("⚠ mapPosition: Eşleşmeyen pozisyon:", pos);
+    return pos.toUpperCase();
+}
+
+
+// ★★★ ANA BONUS FONKSİYONU ★★★
+async function applyPositionBonus(playerId, newStats) {
+
+    console.log("🔥 applyPositionBonus ÇAĞRILDI → playerId:", playerId);
+
+    let p = CACHE.players.find(x => x.id === playerId);
+
+    console.log("📌 Oyuncu bulundu mu?", p ? "EVET" : "HAYIR");
+    if (!p) return;
+
+    console.log("📌 Oyuncu adı:", p.name);
+    console.log("📌 Orijinal mainPos:", p.mainPos);
+
+    let pos = mapPosition(p.mainPos);
+    console.log("🎯 mapPosition sonucu:", pos);
+
+    console.log("📊 Girilen Statlar:", JSON.stringify(newStats));
+
+    let bonusStats = [];
+
+    if (pos === "ST") {
+        bonusStats = ["sut", "hiz", "kondisyon"];
+    }
+    else if (pos === "LW" || pos === "RW") {
+        bonusStats = ["sut", "hiz", "pas"];
+    }
+    else if (pos === "CM") {
+        bonusStats = ["oyunGorusu", "pas", "fizik"];
+    }
+    else if (pos === "CB" || pos === "LB" || pos === "RB") {
+        bonusStats = ["fizik", "defans", "hiz"];
+    }
+
+    console.log("🎁 Uygulanacak Bonus Statlar:", bonusStats);
+
+    if (bonusStats.length === 0) {
+        console.log("⛔ Bu mevkide bonus yok →", pos);
+        return newStats;
+    }
+
+    // BONUS UYGULAMA (%10)
+    bonusStats.forEach(stat => {
+        let eski = newStats[stat];
+        newStats[stat] = boost(newStats[stat]);
+        console.log(`➕ BONUS: ${stat} → ${eski} ➜ ${newStats[stat]}`);
+    });
+
+    console.log("📈 BONUS SONRASI STATLAR:", JSON.stringify(newStats));
+
+    return newStats;
+}
 
 
 
+// ★★★ PUAN GÖNDERME FONKSİYONU ★★★
+async function puanGonder(hedef, val) {
+
+    console.log("⭐ puanGonder ÇAĞRILDI");
+    console.log("🎯 gelen hedef:", hedef);
+
+    if (!currentUser) {
+        alert("Oturum açılmadı");
+        return;
+    }
+
+    // 1) Rating kaydı
+    await db.collection("ratings").add({
+        from: currentUser,
+        to: hedef,
+        score: val,
+        date: new Date().toISOString()
+    });
+    console.log("💾 Rating kaydedildi.");
+
+    // 2) Oyuncuyu bul
+    let targetPlayer = CACHE.players.find(x => x.name === hedef);
+
+    console.log("🎯 CACHE içinde hedef oyuncu bulundu mu?", targetPlayer ? "EVET" : "HAYIR");
+    if (!targetPlayer) {
+        console.log("⛔ Hedef oyuncu bulunamadı:", hedef);
+        return;
+    }
+
+    // Buradaki val = newStats GELMELİ
+    let newStats = val;
+
+    // 3) Bonus uygulama
+    newStats = await applyPositionBonus(targetPlayer.id, newStats);
+
+    // 4) Firebase'e tamamen yeni statları yaz (merge:false = eski statlar SİLİNİR!)
+    await db.collection("players")
+        .doc(targetPlayer.id)
+        .set({ stats: newStats }, { merge: false });
+
+    console.log("💾 Firestore tamamen yeni statlarla güncellendi");
+
+    await refreshCache();
+    await loadGecmis();
+    await loadEnIyi();
+
+    notify(hedef + " için puanın gönderildi!");
+}
 
 
 

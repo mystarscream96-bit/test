@@ -451,7 +451,28 @@ async function loadPlayers() {
     const box = document.getElementById("oyuncuListe");
     box.innerHTML = "";
 
-    CACHE.players.forEach(p => {
+    // Pozisyon sırası (normalize edilmiş kodlara göre)
+    const posOrder = ["GK","LB","CB","RB","CM","LW","RW","ST",""];
+
+    let sortedPlayers = [...CACHE.players].sort((a, b) => {
+
+        // Türkçe pozisyonu normalize ediyoruz
+        let pa = normalizePos(a.mainPos) || "";
+        let pb = normalizePos(b.mainPos) || "";
+
+        let orderA = posOrder.indexOf(pa);
+        let orderB = posOrder.indexOf(pb);
+
+        // farklı pozisyon ise sıralama
+        if (orderA !== orderB) return orderA - orderB;
+
+        // aynı pozisyon ise alfabetik
+        return (a.name || "").localeCompare(b.name || "");
+
+    });
+
+    // Listeyi ekrana bas
+    sortedPlayers.forEach(p => {
         const photo = p.photo || DEFAULT_PHOTO;
 
         box.innerHTML += `
@@ -473,6 +494,7 @@ async function loadPlayers() {
         `;
     });
 }
+
 
 
 

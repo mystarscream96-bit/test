@@ -29,9 +29,10 @@ body {
     100% { filter: brightness(0.65) saturate(1.5); }
 }
 
-/* ============================================
-   NOTIFICATION
-============================================ */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
+
+* { box-sizing: border-box; user-select: none; }
+
 .notify {
     position: fixed;
     bottom: 22px;
@@ -57,7 +58,63 @@ body {
   padding: 15px;
   box-shadow: 0 0 10px #000;
 }
-
+#field {
+    position: relative;
+}
+.fieldPlayer {
+    position: relative;
+    text-align: center;
+    transform: translate(-50%, -50%);
+	display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+.fieldForma {
+    width: 60px;
+    height: auto;
+    display: block;
+    margin: 0 auto;
+}
+.fieldName {
+    font-size: 14px;
+    color: white;
+    font-weight: bold;
+    display: block;
+    text-shadow: 0 0 5px black;
+	margin-top: 4px;
+}
+.fieldPos {
+    font-size: 11px;
+    color: #ffd600;
+    font-weight: 700;
+    display: block;
+	opacity: 0.8;
+}
+.fieldPlayer img {
+    width: 65px;
+}
+.fieldPlayer .name {
+    margin-top: 5px;
+    font-weight: bold;
+    color: white;
+    text-shadow: 0 0 4px black;
+}
+.fieldForma {
+    width: 55px;
+}
+.fieldCenter {
+     justify-content: center;
+    align-items: center;
+	max-width: 750px;
+}
+#fieldContainer {
+    position: relative;
+	    max-width: 750px;
+}
+#fieldContainer img {
+      width: 750px;
+    border-radius: 20px;
+}
 .pos {
   position: absolute;
   padding: 8px 12px;
@@ -66,21 +123,70 @@ body {
   color: white;
   border-radius: 6px;
   cursor: pointer;
-  font-weight: bold;
+  font-weight: 700;
   transition: 0.2s;
+  text-align: center;
 }
-
 .pos.selected-main {
   background: #ff8c00 !important;
 }
-
 .pos.selected-sub {
   background: #00b7ff !important;
 }
-
-
-
-/* ——— PROFİL YAN YANA LAYOUT ——— */
+#profilim .profil-box {
+    width: 100%;
+    max-width: 1100px;
+    margin: 20px auto;
+    padding: 25px;
+    display: flex;
+    gap: 40px;
+    justify-content: space-between;
+    align-items: flex-start;
+    backdrop-filter: blur(10px);
+    border-radius: 22px;
+    box-shadow: 0 0 20px #7f00ff;
+	background: none !important;
+    background-image: none !important; 
+	text-align: center;
+	box-shadow: 0 0 20px #8a2be2;
+}
+#profilim .profil-photo {
+    width: 240px;
+    height: 240px;
+    border-radius: 16px;
+    border: 3px solid #a347ff;
+    object-fit: cover;
+	max-width: 260px;
+	box-shadow: 0 0 20px #8a2bff;
+	display: block;
+    margin: 0 auto 15px auto;
+}
+#profilim .profil-left {
+    width: 280px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+	min-width: 280px;
+    text-align: center;
+	background: none !important;
+    background-image: none !important;
+	margin-top: -30px !important; 
+}
+#profilim .profil-right {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+	width: 60%;
+    min-width: 270px;
+}
+#profilim .fut-card {
+    margin-top: -20px !important;
+}
+#oyuncular.page {
+    max-width: 1600px !important;
+    width: 100% !important;
+}
 .profil-flex {
     display: flex;
     gap: 30px;
@@ -89,67 +195,19 @@ body {
     padding: 20px;
     flex-wrap: wrap;
 }
-
-.profil-left {
-    width: 32%;
-    min-width: 250px;
-    text-align: center;
-}
-
-.profil-right {
-    width: 60%;
-    min-width: 270px;
-}
-
-/* FOTOĞRAF */
-.profil-photo {
-    width: 160px;
-    height: 160px;
-    border-radius: 15px;
+.profil-img {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
     object-fit: cover;
-    box-shadow: 0 0 20px rgba(0,0,0,0.4);
+    border: 3px solid #ffd700;
+    margin-bottom: 15px;
 }
-
-
-/* ——— MOBİL UYUMLU ——— */
-@media(max-width: 768px) {
-
-    .profil-flex {
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
-    }
-
-    .profil-left, .profil-right {
-        width: 100%;
-    }
-
-    .fm-field {
-        transform: scale(0.9);
-        height: 510px;
-    }
-}
-
-@media(max-width: 480px) {
-    .fm-field {
-        transform: scale(0.8);
-        height: 480px;
-    }
-
-    .fm-card {
-        font-size: 11px;
-        padding: 7px 10px;
-    }
-}
-
-
-
 .selection-panel {
   margin-top: 20px;
   display: flex;
   justify-content: space-around;
 }
-
 .selection-panel input {
   padding: 8px;
   width: 120px;
@@ -158,10 +216,6 @@ body {
   border: 1px solid #888;
   font-weight: bold;
 }
-
-/* ============================================
-   NAV
-============================================ */
 .nav {
     display: flex;
     gap: 12px;
@@ -189,39 +243,6 @@ body {
     background: rgba(138, 43, 255, 0.3);
     box-shadow: 0 0 16px #a347ff;
 }
-.logout-btn {
-    border-color: #ff3b3b;
-    box-shadow: 0 0 10px #ff3b3b;
-}
-.logout-btn:hover {
-    transform: scale(1.08);
-    box-shadow: 0 0 16px #ff6a6a;
-}
-
-/* ============================================
-   PAGES
-============================================ */
-.page {
-    display: none;
-    max-width: 950px;
-    margin: 20px auto;
-    padding: 25px;
-    border-radius: 22px;
-    background: rgba(255,255,255,0.05);
-    backdrop-filter: blur(12px);
-    animation: fadeIn 0.4s ease;
-}
-.page.active {
-    display: block;
-}
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-/* ============================================
-   LOGIN
-============================================ */
 .login-box {
     max-width: 400px;
     margin: 120px auto;
@@ -236,10 +257,27 @@ body {
     font-size: 26px;
     font-weight: 700;
 }
-
-/* ============================================
-   BUTTON
-============================================ */
+.logout-btn {
+    border-color: #ff3b3b;
+    box-shadow: 0 0 10px #ff3b3b;
+}
+.logout-btn:hover {
+    transform: scale(1.08);
+    box-shadow: 0 0 16px #ff6a6a;
+}
+.page {
+    display: none;
+    max-width: 950px;
+    margin: 20px auto;
+    padding: 25px;
+    border-radius: 22px;
+    background: rgba(255,255,255,0.05);
+    backdrop-filter: blur(12px);
+    animation: fadeIn 0.4s ease;
+}
+.page.active {
+    display: block;
+}
 .btn {
     width: 100%;
     padding: 14px;
@@ -258,24 +296,17 @@ body {
     transform: scale(1.05);
     box-shadow: 0 0 16px #c964ff;
 }
-
-/* ============================================
-   INPUTS
-============================================ */
-input {
-    width: 100%;
-    padding: 14px;
-    margin-top: 10px;
-    border-radius: 12px;
-    border: 2px solid #8a2bff;
-    background: rgba(255,255,255,0.08);
-    color: white;
-    font-weight: 600;
+.btn.loading {
+    pointer-events: none;
+    opacity: 0.6;
+    position: relative;
 }
-
-/* ============================================
-   CUSTOM SELECT (SINGLE)
-============================================ */
+.btn.loading::after {
+    content: "⏳";
+    position: absolute;
+    right: 12px;
+    animation: spin 1s linear infinite;
+}
 .custom-select {
     width: 100%;
     margin-top: 14px;
@@ -311,13 +342,47 @@ input {
 .custom-option:hover {
     background: rgba(138,43,255,0.3);
 }
+.custom-multi {
+    margin-top: 14px;
+    position: relative;
+}
+.custom-multi .custom-options {
+    display: none;
+    position: absolute;
+    width: 100%;
+    background: rgba(10,10,10,0.9);
+    border-radius: 12px;
+    border: 2px solid #8a2bff;
+    margin-top: 4px;
+    max-height: 240px;
+    overflow-y: auto;
+    z-index: 50;
+}
+.card {
+    width: 180px;
+    height: 330px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.10), rgba(0,0,0,0.45)),
+                url('https://i.hizliresim.com/j07s1f1.png'); /* örnek FIFA kart PNG */
+    background-size: cover;
+    background-position: center;
+    border-radius: 12px;
+    border: 2px solid rgba(255,255,255,0.35);
+    box-shadow: 0 0 20px rgba(0,0,0,0.6);
+    padding: 10px;
+    text-align: center;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
 .card .ovr {
     font-size: 32px;
     font-weight: 900;
     color: #ffe100;
     margin-bottom: -5px;
 }
-
 .card .pos {
     font-size: 15px;
     font-weight: 700;
@@ -345,160 +410,55 @@ input {
 .card button {
     width: 100%;
     padding: 8px;
-    margin-top: 10px;
-
+    margin-top: auto;
     background: linear-gradient(45deg, #8a2bff, #b46aff);
     color: white;
     border: none;
     border-radius: 10px;
     font-weight: 700;
     cursor: pointer;
-
     box-shadow: 0 0 10px #8a2bff;
     transition: 0.2s;
 }
-
 .card button:hover {
     filter: brightness(1.2);
     transform: scale(1.06);
 }
-
-/* ============================================
-   CUSTOM MULTISELECT (CHIPS)
-============================================ */
-.custom-multi {
-    margin-top: 14px;
-    position: relative;
-}
-.multi-selected {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    min-height: 48px;
-    padding: 12px;
-    border-radius: 12px;
-    border: 2px solid #8a2bff;
-    background: rgba(255,255,255,0.08);
-    cursor: pointer;
-}
-.chip {
-    background: #8a2bff;
-    padding: 6px 10px;
-    border-radius: 12px;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-.chip-remove {
-    cursor: pointer;
-    font-weight: bold;
-}
-.custom-multi .custom-options {
-    display: none;
-    position: absolute;
-    width: 100%;
-    background: rgba(10,10,10,0.9);
-    border-radius: 12px;
-    border: 2px solid #8a2bff;
-    margin-top: 4px;
-    max-height: 240px;
-    overflow-y: auto;
-    z-index: 50;
-}
-/* Oyuncu kartlarını eşit boy yap */
-.card {
-    height: 330px !important;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-}
-
-/* Kart içi düzeni eşitle */
 .card img {
-    width: 100px;
-    height: 100px;
-    object-fit: cover;
-}
-
-/* İç yazıları hizala */
-.card div {
-    flex-shrink: 0;
-}
-
-.card button {
-    margin-top: auto;
-}
-
-/* ============================================
-   PLAYER CARDS
-============================================ */
-#oyuncular.page {
-    max-width: 1600px !important;
-    width: 100% !important;
-}
-.card-grid {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 25px;
-    padding: 20px;
-    width: 100%;
-    justify-items: center;
-}
-
-.card .positions {
-    min-height: 80px !important;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-}
-
-.card {
-    width: 180px;
-    height: 300px;
-
-    background: linear-gradient(180deg, rgba(255,255,255,0.10), rgba(0,0,0,0.45)),
-                url('https://i.hizliresim.com/j07s1f1.png'); /* örnek FIFA kart PNG */
-
-    background-size: cover;
-    background-position: center;
-    border-radius: 18px;
-
-    border: 2px solid rgba(255,255,255,0.35);
-    box-shadow: 0 0 20px rgba(0,0,0,0.6);
-
-    padding: 15px;
-    text-align: center;
-    box-sizing: border-box;
-
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
-    align-items: center;
-
-    transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.card:hover {
-    transform: scale(1.07);
-    box-shadow: 0 0 25px rgba(255,255,255,0.8);
-}
-
-.card img {
-    width: 85px;
-    height: 85px;
-    border-radius: 50%;
+    width: 75px;
+    height: 75px;
+    border-radius: 10px ;
     object-fit: cover;
 
     border: 3px solid #ffd700;
     box-shadow: 0 0 10px black;
     margin-bottom: 10px;
 }
-
-
-/* ============================================
-   KING LISTS
-============================================ */
+.card div {
+    flex-shrink: 0;
+}
+.card-grid {
+    display: grid;
+	grid-template-columns: repeat(7, 1fr);
+    gap: 10px;
+    padding: 20px;
+    width: 100%;
+    justify-items: center;
+}
+.card .positions {
+    min-height: 80px !important;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+.card:hover {
+    transform: scale(1.07);
+    box-shadow: 0 0 25px rgba(255,255,255,0.8);
+}
+.card h3 {
+        font-size: 15px !important;
+        margin-top: 8px !important;
+}
 .kr-item {
     display: flex;
     justify-content: space-between;
@@ -529,52 +489,81 @@ input {
     font-size: 22px;
     font-weight: 800;
 }
-.profil-box {
-    background: rgba(255,255,255,0.05);
-    padding: 20px;
-    border-radius: 20px;
-    width: 350px;
-    margin: auto;
-    text-align: center;
-    box-shadow: 0 0 20px #8a2be2;
+.multi-selected {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    min-height: 48px;
+    padding: 12px;
+    border-radius: 12px;
+    border: 2px solid #8a2bff;
+    background: rgba(255,255,255,0.08);
+    cursor: pointer;
+}
+.chip {
+    background: #8a2bff;
+    padding: 6px 10px;
+    border-radius: 12px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.chip-remove {
+    cursor: pointer;
+    font-weight: bold;
+}
+input {
+    width: 100%;
+    padding: 14px;
+    margin-top: 10px;
+    border-radius: 12px;
+    border: 2px solid #8a2bff;
+    background: rgba(255,255,255,0.08);
+    color: white;
+    font-weight: 600;
+}
+/* ——— MOBİL UYUMLU ——— */
+@media(max-width: 768px) {
+
+    .profil-flex {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+
+    .profil-left, .profil-right {
+        width: 100%;
+    }
+
+    .fm-field {
+        transform: scale(0.9);
+        height: 510px;
+    }
 }
 
-.profil-img {
-    width: 120px;
-    height: 120px;
-    border-radius: 50%;
-    object-fit: cover;
-    border: 3px solid #ffd700;
-    margin-bottom: 15px;
-}
-.profil-photo {
-    width: 60%;
-    max-width: 260px;
-    height: auto;
-    max-height: 260px;
-    object-fit: cover;
-    border-radius: 15px;
-    border: 4px solid #a020f0;
-    display: block;
-    margin: 0 auto 15px auto;
-}
-.btn.loading {
-    pointer-events: none;
-    opacity: 0.6;
-    position: relative;
+@media(max-width: 480px) {
+    .fm-field {
+        transform: scale(0.8);
+        height: 480px;
+    }
+
+    .fm-card {
+        font-size: 11px;
+        padding: 7px 10px;
+    }
 }
 
-.btn.loading::after {
-    content: "⏳";
-    position: absolute;
-    right: 12px;
-    animation: spin 1s linear infinite;
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
 }
-
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
 }
+
+
 
 /* =========================================
    MOBILE RESPONSIVE FULL FIX – V17
@@ -635,26 +624,7 @@ input {
     }
 
     /* OYUNCU KARTLARI GRID */
-    .card-grid {
-        grid-template-columns: repeat(2, 1fr) !important;
-        gap: 10px !important;
-    }
-
-    .card {
-        padding: 10px !important;
-        border-radius: 12px !important;
-    }
-
-    .card img {
-        width: 75px !important;
-        height: 75px !important;
-        border-radius: 10px !important;
-    }
-
-    .card h3 {
-        font-size: 15px !important;
-        margin-top: 8px !important;
-    }
+    
 
     /* KRALLIK LİSTESİ */
     .kr-item {
@@ -717,110 +687,10 @@ input {
 /* ============================================================
    GLOBAL
 ============================================================ */
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
-
-* { box-sizing: border-box; user-select: none; }
-body {
-    margin: 0;
-    background: #000;
-    font-family: Poppins, sans-serif;
-    color: white;
-    overflow-x: hidden;
-}
-
-.bg {
-    position: fixed;
-    inset: 0;
-    z-index: -1;
-    background: url("https://i.hizliresim.com/21lpacv.png") center/cover no-repeat;
-    filter: brightness(0.45) saturate(1.3);
-}
-
-/* ============================================================
-   PROFİL LAYOUT — FOTO SOLDA / SAHA SAĞDA
-============================================================ */
-#profilim .profil-box {
-    width: 100%;
-    max-width: 1100px;
-    margin: 25px auto;
-    padding: 25px;
-    display: flex;
-    gap: 35px;
-    justify-content: space-between;
-    align-items: flex-start;
-    background: rgba(255,255,255,0.04);
-    backdrop-filter: blur(10px);
-    border-radius: 20px;
-    box-shadow: 0 0 20px #7f00ff;
-}
-
-/* SOL — FOTOĞRAF */
-#profilim .profil-left {
-    width: 260px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 15px;
-}
-
-#profilim .profil-photo {
-    width: 230px;
-    height: 230px;
-    border-radius: 16px;
-    border: 4px solid #a347ff;
-    object-fit: cover;
-}
-
-/* ============================================================
-   FM SAHA — SAĞ TARAFTA
-============================================================ */
-#profilim .profil-right {
-    flex: 1;
-    display: flex;
-    justify-content: center;
-}
-
-/* SAHA ARKA PLAN + ÇİZGİLER (FM24 TARZI) */
 
 
-/* ============================================================
-   FM 3D LIVERPOOL FORMA KARTLARI
-============================================================ */
-/* ============================================
-   PROFİL LEAGUE MODE — FINAL FIXED V20
-============================================ */
-#profilim .profil-box {
-    width: 100%;
-    max-width: 1100px;
-    margin: 20px auto;
-    padding: 25px;
-    display: flex;
-    justify-content: space-between;
-    gap: 40px;
-    background: rgba(255,255,255,0.05);
-    backdrop-filter: blur(10px);
-    border-radius: 22px;
-}
 
-/* SOL TARAF */
-#profilim .profil-left {
-    width: 280px;
-    min-width: 280px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 14px;
-}
 
-/* Foto */
-#profilim .profil-photo {
-    width: 240px;
-    height: 240px;
-    border-radius: 16px;
-    object-fit: cover;
-    border: 3px solid #a347ff;
-    box-shadow: 0 0 20px #8a2bff;
-}
 
 /* ============================================
    SAĞ TARAF (SAHA)
@@ -1055,15 +925,7 @@ body {
     gap: 5px;
 }
 
-.profil-left {
-    background: none !important;
-    background-image: none !important;
-}
 
-.profil-box {
-    background: none !important;
-    background-image: none !important;
-}
 
 
 
@@ -1075,15 +937,7 @@ img:not([src]) {
     width: 0 !important;
     height: 0 !important;
 }
-/* FUT kartı yukarı hizalama */
-#profilim .profil-left {
-    margin-top: -30px !important; /* gerekirse -30 / -50 ayarlayabilirsin */
-}
 
-/* Kartın iç boşluğu azalt */
-#profilim .fut-card {
-    margin-top: -20px !important;
-}
 
 .photo-actions{
 	margin-top: -40px !important;
@@ -1307,33 +1161,7 @@ img:not([src]) {
     display: inline-block;
     min-width: 120px;        /* Her isim aynı hizada */
 }
-.fieldPlayer {
-    position: relative;
-    text-align: center;
-    transform: translate(-50%, -50%);
-}
 
-.fieldForma {
-    width: 60px;
-    height: auto;
-    display: block;
-    margin: 0 auto;
-}
-
-.fieldName {
-    font-size: 14px;
-    color: white;
-    font-weight: 700;
-    display: block;
-    text-shadow: 0 0 5px black;
-}
-
-.fieldPos {
-    font-size: 12px;
-    color: #ffd600;
-    font-weight: 700;
-    display: block;
-}
 
 
 
@@ -1345,54 +1173,12 @@ img:not([src]) {
     transform: translate(-50%, -50%);
 }
 
-.fieldPlayer img {
-    width: 65px;
-}
-
-.fieldPlayer .name {
-    margin-top: 5px;
-    font-weight: bold;
-    color: white;
-    text-shadow: 0 0 4px black;
-}
-
-
-
-/* Pozisyonların konumu */
-.pos {
-    position: absolute;
-    text-align: center;
-    color: white;
-    font-weight: 700;
-}
-
-.fieldPlayer {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-.fieldForma {
-    width: 55px;
-}
-
-.fieldName {
-    font-size: 14px;
-    margin-top: 4px;
-}
-
-.fieldPos {
-    font-size: 11px;
-    opacity: 0.8;
-}
 
 
 
 
 
-#field {
-    position: relative;
-}
+
 
 .player {
     position: absolute;
@@ -1400,15 +1186,7 @@ img:not([src]) {
     text-align: center;
 }
 
-.fieldForma {
-    width: 55px;
-}
 
-.fieldName {
-    font-size: 14px;
-    font-weight: bold;
-    color: white;
-}
 .hkPlayer {
     display: flex;
     align-items: center;
@@ -1580,21 +1358,6 @@ img:not([src]) {
     justify-self: end;
 }
 
-.fieldCenter {
-     justify-content: center;
-    align-items: center;
-	max-width: 750px;
-	
-}
-
-#fieldContainer {
-    position: relative;
-	    max-width: 750px;
-}
-#fieldContainer img {
-      width: 750px;
-    border-radius: 20px;
-}
 
 #haftaninKadro.page {
     
@@ -1675,7 +1438,16 @@ body {
     align-items: center;
 	
 }
-
+.fm-selection input {
+    width: 130px;
+    padding: 10px;
+    border-radius: 10px;
+    border: none;
+    background: rgba(255,255,255,0.15);
+    color: #fff;
+    text-align: center;
+    font-weight: bold;
+}
 .fm-field {
     width: 100%;
     max-width: 350px;
@@ -1725,12 +1497,11 @@ body {
 }
 
 
-
 /* ============================================
    POZİSYON KOORDİNATLARI
 ============================================ */
 .fm-card[data-pos="ST"]  { top: 15px; left: 135px; }
-.fm-card[data-pos="CM-R"] { top: 150px; left: 135px; }
+.fm-card[data-pos="CM"] { top: 150px; left: 135px; }
 
 /* Sol kanat aynı – Sağ kanat sağa açıldı */
 .fm-card[data-pos="LW"] { top: 110px; left: 10px; }
@@ -1739,9 +1510,15 @@ body {
 /* Sol bek aynı – Sağ bek +25px sağa kaydırıldı */
 .fm-card[data-pos="LB"]   { top: 270px; left: 10px; }
 
-.fm-card[data-pos="CB-R"] { top: 270px; left: 135px; }
+.fm-card[data-pos="CB"] { top: 270px; left: 135px; }
 .fm-card[data-pos="RB"]   { top: 270px; left: 260px; }  /* önce 230’du → 240 yaptım */
 .fm-card[data-pos="GK"] { top: 365px; left: 135px; }
 
 
 
+.bonus-glow {
+    color: #00eaff !important;
+    text-shadow: 0 0 8px #00eaff, 0 0 15px #0099cc;
+    font-weight: 700;
+    transition: 0.2s;
+}

@@ -244,7 +244,10 @@ async function loadProfil() {
 
     const p = CACHE.players.find(x => x.name === currentUser);
     if (!p) return;
-
+console.log("🧩 PROFIL PLAYER:", p);
+    console.log("➡️ mainPos:", p.mainPos);
+    console.log("➡️ subPos:", p.subPos);
+    console.log("➡️ Taban Statlar:", p.stats);
     // Karttaki fotoğraf, isim, pozisyon
   
     document.getElementById("fifa-name").textContent = p.name;
@@ -902,11 +905,10 @@ function closeRatePanel() {
 }
 
 document.getElementById("saveRating").onclick = async () => {
-
     console.log("⭐ Kaydet tıklandı, oyuncu ID:", selectedPlayerId);
 
-    // 1) Popup’tan alınan statlar
-    let newStats = {
+    // 1) Popup’tan alınan taban statlar
+    let baseStats = {
         sut: Number(document.getElementById("rate-sut").value),
         pas: Number(document.getElementById("rate-pas").value),
         kondisyon: Number(document.getElementById("rate-kond").value),
@@ -916,43 +918,20 @@ document.getElementById("saveRating").onclick = async () => {
         oyunGorusu: Number(document.getElementById("rate-oyunGorusu").value)
     };
 
-    console.log("📊 GİRİLEN STATLAR:", newStats);
+    console.log("📊 TABAN STATLAR:", baseStats);
 
-    // **ESKİ STATLAR TAMAMEN SİLİNİYOR**
-    // Firebase'e sadece yeni statlar yazılacak
-
-    const player = CACHE.players.find(x => x.id === selectedPlayerId);
-    const pos = mapPosition(player.mainPos);
-
-    let bonusStats = [];
-
-    if (pos === "ST") bonusStats = ["sut", "hiz", "kondisyon"];
-    else if (pos === "LW" || pos === "RW") bonusStats = ["sut", "hiz", "pas"];
-    else if (pos === "CM") bonusStats = ["oyunGorusu", "pas", "fizik"];
-    else if (pos === "CB" || pos === "LB" || pos === "RB") bonusStats = ["fizik", "defans", "hiz"];
-
-    console.log("🎁 BONUS UYGULANACAK STATLAR:", bonusStats);
-
-    // BONUS UYGULA — sadece kullanıcı değer girdiyse
-    bonusStats.forEach(stat => {
-        if (!isNaN(newStats[stat]) && newStats[stat] > 0) {
-            let oldVal = newStats[stat];
-            newStats[stat] = Math.round(newStats[stat] * 1.10);
-            console.log(`➕ BONUS: ${stat} → ${oldVal} ➜ ${newStats[stat]}`);
-        }
-    });
-
-    // Firebase'e yeni temiz statları yaz
+    // 2) Firebase'e SADECE taban statları yazıyoruz
     await db.collection("players")
         .doc(selectedPlayerId)
-        .update({ stats: newStats });
+        .update({ stats: baseStats });
 
-    console.log("💾 Firestore güncellendi");
+    console.log("💾 Firestore taban statlarla güncellendi");
 
     await refreshCache();
     closeRatePanel();
     notify("Puanlar Kaydedildi");
 
+    // Profil kartını güncelle
     const updatedPlayer = CACHE.players.find(x => x.id === selectedPlayerId);
     if (updatedPlayer.name === currentUser) {
         renderFifaCard({ ...updatedPlayer });
@@ -961,37 +940,50 @@ document.getElementById("saveRating").onclick = async () => {
 
 
 
+
 function renderFifaCard(p) {
 
-    const stats = p.stats ? p.stats : {
-        sut: 0,
-        pas: 0,
-        kondisyon: 0,
-        hiz: 0,
-        fizik: 0,
-        defans: 0,
-        oyunGorusu: 0
+    const base = p.stats || {
+        sut: 0, pas: 0, kondisyon: 0, hiz: 0,
+        fizik: 0, defans: 0, oyunGorusu: 0
     };
 
-   
-    document.getElementById("fifa-name").textContent = p.name?.toUpperCase() ?? "-";
+    // BONUS uygulanmış statlar
+    const applied = applyMatchBonus(p, base);
+
+    // 📌 BONUSLU OVR HESABI TEK YERDEN
+    const ovr = getOVR_withBonus(p);
+
+    // Karta yaz
+    document.getElementById("fifa-name").textContent = p.name || "-";
     document.getElementById("fifa-position").textContent = p.mainPos || "-";
-
-    document.getElementById("fifa-sut").textContent = stats.sut ?? 0;
-    document.getElementById("fifa-pas").textContent = stats.pas ?? 0;
-    document.getElementById("fifa-kondisyon").textContent = stats.kondisyon ?? 0;
-    document.getElementById("fifa-hiz").textContent = stats.hiz ?? 0;
-    document.getElementById("fifa-fizik").textContent = stats.fizik ?? 0;
-    document.getElementById("fifa-defans").textContent = stats.defans ?? 0;
-	
-    // OVR hesapla
-    const ovr = Math.round(
-        (stats.sut + stats.pas + stats.kondisyon +
-         stats.hiz + stats.fizik + stats.defans + stats.oyunGorusu) / 7
-    );
-
     document.getElementById("fifa-overall").textContent = ovr;
+
+    // Bonus kontrol fonksiyonu
+    const isBonus = (key) => applied[key] !== base[key];
+
+    // Stat yazma + glow efekti
+    const writeStat = (id, key) => {
+        const el = document.getElementById(id);
+        el.textContent = applied[key];
+
+        if (isBonus(key)) el.classList.add("bonus-glow");
+        else el.classList.remove("bonus-glow");
+    };
+
+    writeStat("fifa-hiz", "hiz");
+    writeStat("fifa-sut", "sut");
+    writeStat("fifa-pas", "pas");
+    writeStat("fifa-kondisyon", "kondisyon");
+    writeStat("fifa-defans", "defans");
+    writeStat("fifa-fizik", "fizik");
 }
+
+
+
+
+
+
 
 
 async function loadPlayersIntoKadroUI() {
@@ -1162,54 +1154,37 @@ function normalizePos(posName) {
 /* ===============================
    OVR Hesaplama
 ================================ */
-function getOVR(stats) {
-    if (!stats) return 0;
+function getOVR(player) {
+    if (!player) return 0;
+
+    const applied = applyMatchBonus(player, player.stats || {});
+
     return Math.round(
-        ((stats.sut||0) +
-         (stats.pas||0) +
-         (stats.kondisyon||0) +
-         (stats.hiz||0) +
-         (stats.fizik||0) +
-		 (stats.oyunGorusu||0) +
-         (stats.defans||0)) / 7
+        (
+            (applied.sut||0) +
+            (applied.pas||0) +
+            (applied.kondisyon||0) +
+            (applied.hiz||0) +
+            (applied.fizik||0) +
+            (applied.oyunGorusu||0) +
+            (applied.defans||0)
+        ) / 7
     );
 }
 
-/* ===============================
-   OYUNCU POZİSYON OBJESİ
-================================ */
+
 function getPlayerPositions(p) {
     return {
         id: p.id,
         name: p.name,
-        main: normalizePos(p.mainPos),
-        sub: normalizePos(p.subPos),
-        ovr: getOVR(p.stats),
-        photo: p.photo
+    main: mapPosition(p.mainPos),   // normalize ile karıştırma
+        sub: mapPosition(p.subPos),
+        ovr: p.matchOVR              // BONUSLU OVR
     };
 }
 
-/* ============================================
-   OYUNCU POZİSYON OKUMA + OVR
-============================================ */
-function getPlayerPositions(p) {
 
-    const main = normalizePos(p.mainPos);
-    const sub  = normalizePos(p.subPos);
 
-    const s = p.stats || {};
-    const ovr = Math.round(
-        ((s.sut||0)+(s.pas||0)+(s.kondisyon||0)+(s.hiz||0)+(s.fizik||0)+(s.oyunGorusu||0)+(s.defans||0)) / 7
-    );
-
-    return {
-        id: p.id,
-        name: p.name,
-        main,
-        sub,
-        ovr
-    };
-}
 
 /* ==========================================================
    TAKIM DENGELEYİCİ (OVR BALANCER)
@@ -1218,15 +1193,10 @@ function balanceTeams(teamA, teamB, posMap) {
 
     const getPlayer = id => CACHE.players.find(p => p.id === id);
 
-    const getOVR = p => {
-        if (!p || !p.stats) return 0;
-        const s = p.stats;
-        return Math.round(
-            ((s.sut||0)+(s.pas||0)+(s.kondisyon||0)+(s.hiz||0)+(s.fizik||0)+(s.oyunGorusu||0)+(s.defans||0)) / 7
-        );
-    };
+    // ❗ SADECE BONUSLU OVR KULLAN — yeniden hesaplama YASAK
+    const getOVR = p => (p?.matchOVR ?? 0);
 
-    const sum = arr => arr.reduce((t,id)=>t+getOVR(getPlayer(id)),0);
+    const sum = arr => arr.reduce((t, id) => t + getOVR(getPlayer(id)), 0);
 
     let attempts = 0;
 
@@ -1236,13 +1206,14 @@ function balanceTeams(teamA, teamB, posMap) {
         let sumB = sum(teamB);
         let diff = sumA - sumB;
 
+        // hedef fark
         if (Math.abs(diff) <= 15) break;
 
         let strong = diff > 0 ? teamA : teamB;
         let weak   = diff > 0 ? teamB : teamA;
 
         let bestSwap = null;
-        let bestImpact = 0;
+        let bestImpact = Infinity;
 
         // EN İYİ SWAP’I ARIYORUZ
         for (let sid of strong) {
@@ -1261,9 +1232,11 @@ function balanceTeams(teamA, teamB, posMap) {
                 const wp = getPlayer(wid);
                 const wOvr = getOVR(wp);
 
-                let impact = Math.abs((sumA - sOvr + wOvr) - (sumB - wOvr + sOvr));
+                let newA = sumA - sOvr + wOvr;
+                let newB = sumB - wOvr + sOvr;
+                let impact = Math.abs(newA - newB);
 
-                if (!bestSwap || impact < bestImpact) {
+                if (impact < bestImpact) {
                     bestImpact = impact;
                     bestSwap = { sid, wid };
                 }
@@ -1294,26 +1267,55 @@ function balanceTeams(teamA, teamB, posMap) {
 
 
 
+
 /* ==========================================================
    ANA TAKIM OLUŞTURUCU — DENGELİ SÜRÜM
 ========================================================== */
+function computeOVR(s) {
+    return Math.round(
+        (
+            (s.sut||0) +
+            (s.pas||0) +
+            (s.kondisyon||0) +
+            (s.hiz||0) +
+            (s.fizik||0) +
+            (s.defans||0) +
+            (s.oyunGorusu||0)
+        ) / 7
+    );
+}
+
+function preparePlayerForMatch(p) {
+    const bonusStats = applyMatchBonus(p, p.stats);
+    p.matchStats = bonusStats;
+    p.matchOVR = getOVR(p);
+    return p;
+}
+
 function buildBalancedTeams(selectedPlayers, gkA, gkB) {
 
     const POS_ORDER = ["ST", "RW", "LW", "CM", "LB", "RB", "CB"];
 
-
     let teamA = [gkA];
     let teamB = [gkB];
+	// GK’ları da maç için hazırla!!!
+let gkPlayerA = CACHE.players.find(p => p.id === gkA);
+let gkPlayerB = CACHE.players.find(p => p.id === gkB);
 
+if (gkPlayerA) preparePlayerForMatch(gkPlayerA);
+if (gkPlayerB) preparePlayerForMatch(gkPlayerB);
+
+    // BONUSLU stats ile hazırla
     let players = selectedPlayers
         .map(id => CACHE.players.find(p => p.id === id))
         .filter(p => p && p.id !== gkA && p.id !== gkB)
+        .map(p => preparePlayerForMatch(p))
         .map(p => getPlayerPositions(p));
 
     /* =====================================
        1) MAIN POZISYON GRUPLAMA
     ====================================== */
-    let groups = {};  
+    let groups = {};
     POS_ORDER.forEach(pos => groups[pos] = []);
 
     players.forEach(p => {
@@ -1321,7 +1323,7 @@ function buildBalancedTeams(selectedPlayers, gkA, gkB) {
             groups[p.main].push(p);
     });
 
-    POS_ORDER.forEach(pos => groups[pos].sort((a,b)=>b.ovr - a.ovr));
+    POS_ORDER.forEach(pos => groups[pos].sort((a, b) => b.ovr - a.ovr));
 
     let posMap = {};
     let used = new Set();
@@ -1330,12 +1332,11 @@ function buildBalancedTeams(selectedPlayers, gkA, gkB) {
        2) MAIN SLOT DOLDUR
     ====================================== */
     POS_ORDER.forEach(pos => {
-
         const list = groups[pos];
 
         if (list.length >= 2) {
             posMap[pos] = list[0].id;
-            posMap[pos+"2"] = list[1].id;
+            posMap[pos + "2"] = list[1].id;
 
             teamA.push(list[0].id);
             teamB.push(list[1].id);
@@ -1345,14 +1346,14 @@ function buildBalancedTeams(selectedPlayers, gkA, gkB) {
         }
         else if (list.length === 1) {
             posMap[pos] = list[0].id;
-            posMap[pos+"2"] = null;
+            posMap[pos + "2"] = null;
 
             teamA.push(list[0].id);
             used.add(list[0].id);
         }
         else {
             posMap[pos] = null;
-            posMap[pos+"2"] = null;
+            posMap[pos + "2"] = null;
         }
     });
 
@@ -1360,7 +1361,7 @@ function buildBalancedTeams(selectedPlayers, gkA, gkB) {
        3) SUB HAVUZU
     ====================================== */
     let subPlayers = players.filter(p => !used.has(p.id));
-    subPlayers.sort((a,b)=>b.ovr - a.ovr);
+    subPlayers.sort((a, b) => b.ovr - a.ovr);
 
     /* =====================================
        4) SUB → BOŞ SLOT DOLDUR
@@ -1387,13 +1388,12 @@ function buildBalancedTeams(selectedPlayers, gkA, gkB) {
     });
 
     /* =====================================
-       5) KALANLARI OVR’A GÖRE DOLDUR
+       5) KALANLARI BONUS OVR’A GÖRE DOLDUR
     ====================================== */
     let leftovers = players.filter(p => !used.has(p.id));
-    leftovers.sort((a,b)=>b.ovr - a.ovr);
+    leftovers.sort((a, b) => b.ovr - a.ovr);
 
     POS_ORDER.forEach(pos => {
-
         if (!posMap[pos] && leftovers.length > 0) {
             let p = leftovers.shift();
             posMap[pos] = p.id;
@@ -1401,13 +1401,12 @@ function buildBalancedTeams(selectedPlayers, gkA, gkB) {
             used.add(p.id);
         }
 
-        if (!posMap[pos+"2"] && leftovers.length > 0) {
+        if (!posMap[pos + "2"] && leftovers.length > 0) {
             let p = leftovers.shift();
-            posMap[pos+"2"] = p.id;
+            posMap[pos + "2"] = p.id;
             teamB.push(p.id);
             used.add(p.id);
         }
-
     });
 
     /* =====================================
@@ -1417,67 +1416,20 @@ function buildBalancedTeams(selectedPlayers, gkA, gkB) {
     posMap["GK2"] = gkB;
 
     /* =====================================
-       7) OVR DENGELEME
+       7) BONUSLU OVR DENGELEME
     ====================================== */
     let balanced = balanceTeams(teamA, teamB, posMap);
 
-return {
-    teamA: balanced.teamA,
-    teamB: balanced.teamB,
-    posMap: balanced.posMap
-};
-
+    return {
+        teamA: balanced.teamA,
+        teamB: balanced.teamB,
+        posMap: balanced.posMap
+    };
 }
 
 
 
-// ===========================
-//  DEBUG: STOPER (CB) DURUMU
-// ===========================
-function debugCB() {
-    if (!window.posMap) {
-        console.log("posMap bulunamadı! Kadro oluşturulmadı.");
-        return;
-    }
 
-    const cbA = posMap["CB"];
-    const cbB = posMap["CB2"];
-
-    const getPlayer = (id) => CACHE.players.find(p => p.id === id);
-
-    console.log("====== STOPER (CB) DURUMU ======");
-    console.log("A Takımı CB :", cbA ? getPlayer(cbA).name : "YOK");
-    console.log("B Takımı CB2:", cbB ? getPlayer(cbB).name : "YOK");
-
-    if (cbA) console.log("A Takımı CB OVR:", getOVR(getPlayer(cbA).stats));
-    if (cbB) console.log("B Takımı CB OVR:", getOVR(getPlayer(cbB).stats));
-}
-
-
-// ===========================
-//  DEBUG: TÜM POZİSYONLAR
-// ===========================
-function debugAllPositions() {
-    if (!window.posMap) {
-        console.log("posMap bulunamadı! Kadro oluşturulmadı.");
-        return;
-    }
-
-    const getPlayer = (id) => CACHE.players.find(p => p.id === id);
-
-    console.log("====== TÜM POZİSYONLAR ======");
-
-    ["GK","CB","LB","RB","CM","LW","RW","ST"].forEach(pos => {
-        const A = posMap[pos];
-        const B = posMap[pos + "2"];
-
-        console.log(
-            pos.padEnd(3),
-            "| A:", A ? getPlayer(A).name : "YOK",
-            "| B:", B ? getPlayer(B).name : "YOK"
-        );
-    });
-}
 
 
 
@@ -1574,6 +1526,9 @@ document.getElementById("buildBtn").onclick = async () => {
 
     const result = buildBalancedTeams(selectedPlayers, gkA, gkB);
 
+    // 🔥 TAKIM TOPLAM OVR'LARINI YAZDIR
+    printTeamOVRs(result.teamA, result.teamB);
+
     posMap = result.posMap;
     window.lastResult = result;
 
@@ -1588,6 +1543,7 @@ document.getElementById("buildBtn").onclick = async () => {
 
     alert("Kadro oluşturuldu!");
 };
+
 
 function loadGKSelectors() {
     const gkAOptions = document.querySelector("#gkASelect .custom-options");
@@ -1647,12 +1603,8 @@ async function loadHaftaninKadro() {
 
     // OVR Hesaplayıcı
     const getOVR = (p) => {
-        if (!p || !p.stats) return 0;
-        const s = p.stats;
-        return Math.round(
-            ((s.sut||0)+(s.pas||0)+(s.kondisyon||0)+(s.hiz||0)+(s.fizik||0)+(s.oyunGorusu||0)+(s.defans||0)) / 7
-        );
-    };
+    return p?.matchOVR ?? getOVR_withBonus(p);
+};
 
     // Renk sınıfı seçimi
     const getOvrClass = (ovr) => {
@@ -1669,6 +1621,8 @@ async function loadHaftaninKadro() {
 
         const A_player = CACHE.players.find(p => p.id === A_id);
         const B_player = CACHE.players.find(p => p.id === B_id);
+if (A_player) preparePlayerForMatch(A_player);
+if (B_player) preparePlayerForMatch(B_player);
 
         const posName = posTranslate(key);
 
@@ -1739,7 +1693,8 @@ function drawOnField(player, pos, team) {
     <div class="playerMark" style="left:${c.x}%; top:${c.y}%;">
         <div class="formWrapper">
             <img src="${team === "A" ? FORMA_A : FORMA_B}" class="formImg">
-            <span class="formNumber">${getOVR(player)}</span>
+            <span class="formNumber">${player.matchOVR ?? getOVR_withBonus(player)}</span>
+
         </div>
         <div class="playerName">${player.name}</div>
     </div>
@@ -1803,10 +1758,7 @@ function debugTeamOVR(teamA, teamB) {
     console.log("FARK:", Math.abs(sumA - sumB));
 }
 
-// %10 arttırma fonksiyonu
-function boost(value) {
-    return Math.round((value || 0) * 1.10); // %10 bonus
-}
+
 
 function mapPosition(pos) {
     if (!pos) return "";
@@ -1824,117 +1776,104 @@ function mapPosition(pos) {
     console.log("⚠ mapPosition: Eşleşmeyen pozisyon:", pos);
     return pos.toUpperCase();
 }
+function applyMatchBonus(player, stats) {
+    const pos = mapPosition(player.mainPos);
+    let s = { ...stats }; // Tabandan kopya
 
-
-// ★★★ ANA BONUS FONKSİYONU ★★★
-async function applyPositionBonus(playerId, newStats) {
-
-    console.log("🔥 applyPositionBonus ÇAĞRILDI → playerId:", playerId);
-
-    let p = CACHE.players.find(x => x.id === playerId);
-
-    console.log("📌 Oyuncu bulundu mu?", p ? "EVET" : "HAYIR");
-    if (!p) return;
-
-    console.log("📌 Oyuncu adı:", p.name);
-    console.log("📌 Orijinal mainPos:", p.mainPos);
-
-    let pos = mapPosition(p.mainPos);
-    console.log("🎯 mapPosition sonucu:", pos);
-
-    console.log("📊 Girilen Statlar:", JSON.stringify(newStats));
-
-    let bonusStats = [];
+    // Yüzde bonus hesaplayan fonksiyon
+    const boost = (v, percent) => Math.round(v * (1 + percent / 100));
 
     if (pos === "ST") {
-        bonusStats = ["sut", "hiz", "kondisyon"];
+        s.sut = boost(s.sut, 25);        // %25
+        s.hiz = boost(s.hiz, 15);        // %15
+        s.kondisyon = boost(s.kondisyon, 15);  // %15
     }
     else if (pos === "LW" || pos === "RW") {
-        bonusStats = ["sut", "hiz", "pas"];
+        s.hiz = boost(s.hiz, 25);        // %25
+        s.kondisyon = boost(s.kondisyon, 15);  // %15
+        s.sut = boost(s.sut, 15);        // %15
     }
     else if (pos === "CM") {
-        bonusStats = ["oyunGorusu", "pas", "fizik"];
+        s.pas = boost(s.pas, 25);        // %25
+        s.oyunGorusu = boost(s.oyunGorusu, 20); // %20
+        s.fizik = boost(s.fizik, 10);    // %10
     }
-    else if (pos === "CB" || pos === "LB" || pos === "RB") {
-        bonusStats = ["fizik", "defans", "hiz"];
+    else if (pos === "LB" || pos === "RB") {
+        s.defans = boost(s.defans, 15);  // %25
+        s.fizik = boost(s.fizik, 20);    // %20
+        s.hiz = boost(s.hiz, 20);        // %10
+    }
+	else if (pos === "CB") {
+        s.defans = boost(s.defans, 25);  // %25
+        s.fizik = boost(s.fizik, 20);    // %20
+        s.hiz = boost(s.hiz, 10);        // %10
     }
 
-    console.log("🎁 Uygulanacak Bonus Statlar:", bonusStats);
-
-    if (bonusStats.length === 0) {
-        console.log("⛔ Bu mevkide bonus yok →", pos);
-        return newStats;
-    }
-
-    // BONUS UYGULAMA (%10)
-    bonusStats.forEach(stat => {
-        let eski = newStats[stat];
-        newStats[stat] = boost(newStats[stat]);
-        console.log(`➕ BONUS: ${stat} → ${eski} ➜ ${newStats[stat]}`);
-    });
-
-    console.log("📈 BONUS SONRASI STATLAR:", JSON.stringify(newStats));
-
-    return newStats;
+    return s;
 }
 
 
 
-// ★★★ PUAN GÖNDERME FONKSİYONU ★★★
-async function puanGonder(hedef, val) {
+function getOVR_withBonus(player) {
+    const base = player.stats || {};
+    const applied = applyMatchBonus(player, base);
 
-    console.log("⭐ puanGonder ÇAĞRILDI");
-    console.log("🎯 gelen hedef:", hedef);
-
-    if (!currentUser) {
-        alert("Oturum açılmadı");
-        return;
-    }
-
-    // 1) Rating kaydı
-    await db.collection("ratings").add({
-        from: currentUser,
-        to: hedef,
-        score: val,
-        date: new Date().toISOString()
-    });
-    console.log("💾 Rating kaydedildi.");
-
-    // 2) Oyuncuyu bul
-    let targetPlayer = CACHE.players.find(x => x.name === hedef);
-
-    console.log("🎯 CACHE içinde hedef oyuncu bulundu mu?", targetPlayer ? "EVET" : "HAYIR");
-    if (!targetPlayer) {
-        console.log("⛔ Hedef oyuncu bulunamadı:", hedef);
-        return;
-    }
-
-    // Buradaki val = newStats GELMELİ
-    let newStats = val;
-
-    // 3) Bonus uygulama
-    newStats = await applyPositionBonus(targetPlayer.id, newStats);
-
-    // 4) Firebase'e tamamen yeni statları yaz (merge:false = eski statlar SİLİNİR!)
-    await db.collection("players")
-        .doc(targetPlayer.id)
-        .set({ stats: newStats }, { merge: false });
-
-    console.log("💾 Firestore tamamen yeni statlarla güncellendi");
-
-    await refreshCache();
-    await loadGecmis();
-    await loadEnIyi();
-
-    notify(hedef + " için puanın gönderildi!");
+    return Math.round(
+        (
+            (applied.sut||0) +
+            (applied.pas||0) +
+            (applied.kondisyon||0) +
+            (applied.hiz||0) +
+            (applied.fizik||0) +
+            (applied.oyunGorusu||0) +
+            (applied.defans||0)
+        ) / 7
+    );
 }
 
+function printTeamOVRs(teamA, teamB) {
+    const getPlayer = id => CACHE.players.find(p => p.id === id);
+
+    console.log("================================");
+    console.log("🔥 A TAKIMI OYUNCU OVR LİSTESİ");
+    console.log("================================");
+
+    teamA.forEach(id => {
+        const p = getPlayer(id);
+        if (p) {
+            console.log(`${p.name} → ${p.matchOVR}`);
+        }
+    });
+
+    console.log("\n================================");
+    console.log("🔥 B TAKIMI OYUNCU OVR LİSTESİ");
+    console.log("================================");
+
+    teamB.forEach(id => {
+        const p = getPlayer(id);
+        if (p) {
+            console.log(`${p.name} → ${p.matchOVR}`);
+        }
+    });
 
 
+    // --- TOPLAM OVR ---
+    const sumOVR = team => 
+        team.reduce((total, playerId) => {
+            const p = getPlayer(playerId);
+            return total + (p?.matchOVR || 0);
+        }, 0);
 
+    const totalA = sumOVR(teamA);
+    const totalB = sumOVR(teamB);
 
+    console.log("\n================================");
+    console.log("🔥 TAKIM OVR TOPLAMLARI");
+    console.log("================================");
 
+    console.log("A TAKIMI TOPLAM OVR →", totalA);
+    console.log("B TAKIMI TOPLAM OVR →", totalB);
 
-
-
+    console.log(`⚽ FARK: ${Math.abs(totalA - totalB)}`);
+}
 
